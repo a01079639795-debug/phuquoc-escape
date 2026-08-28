@@ -1,0 +1,592 @@
+<title>Сервисы Фукуока</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ─── Токены: полная светлая палитра ─────────────────────────────────── */
+  :root {
+    --ground:      #F6F8F7;
+    --surface:     #FFFFFF;
+    --surface-alt: #EEF2F1;
+    --ink:         #131A19;
+    --ink-muted:   #566361;
+    --ink-faint:   #7C8886;
+    --rule:        #DCE3E1;
+    --rule-strong: #C3CECB;
+
+    --accent:      #0F6E62;
+    --accent-deep: #0A4E45;
+    --accent-wash: #E4F0ED;
+
+    --flag:        #A9691A;
+    --flag-wash:   #FAEFDF;
+    --flag-rule:   #E5C48F;
+
+    --shadow: 0 1px 2px rgba(19, 26, 25, .05), 0 8px 24px -12px rgba(19, 26, 25, .12);
+
+    --font-display: 'Unbounded', 'Golos Text', system-ui, sans-serif;
+    --font-body: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1312;
+      --surface:     #151D1B;
+      --surface-alt: #1B2523;
+      --ink:         #E3EAE8;
+      --ink-muted:   #93A19E;
+      --ink-faint:   #74827F;
+      --rule:        #253130;
+      --rule-strong: #35443F;
+      --accent:      #57C4B2;
+      --accent-deep: #8FDCCD;
+      --accent-wash: #12302B;
+      --flag:        #E0A959;
+      --flag-wash:   #2C2113;
+      --flag-rule:   #5C4622;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1312;
+    --surface:     #151D1B;
+    --surface-alt: #1B2523;
+    --ink:         #E3EAE8;
+    --ink-muted:   #93A19E;
+    --ink-faint:   #74827F;
+    --rule:        #253130;
+    --rule-strong: #35443F;
+    --accent:      #57C4B2;
+    --accent-deep: #8FDCCD;
+    --accent-wash: #12302B;
+    --flag:        #E0A959;
+    --flag-wash:   #2C2113;
+    --flag-rule:   #5C4622;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  /* ─── База ───────────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: .18em; }
+  a:hover { text-decoration-color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code, .mono { font-family: var(--font-mono); font-size: .875em; }
+  p code, li code, td code {
+    font-family: var(--font-mono);
+    font-size: .855em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .08em .34em;
+    white-space: nowrap;
+  }
+
+  /* ─── Каркас ─────────────────────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 22px 96px;
+  }
+
+  @media (min-width: 1060px) {
+    .shell { grid-template-columns: 218px minmax(0, 1fr); gap: 56px; padding: 0 32px 120px; }
+  }
+
+  .col { min-width: 0; max-width: 830px; }
+
+  /* ─── Шапка ──────────────────────────────────────────────────────────── */
+  .masthead { border-bottom: 1px solid var(--rule); background: var(--surface); }
+  .masthead-in { max-width: 1180px; margin: 0 auto; padding: 54px 22px 40px; }
+  @media (min-width: 1060px) { .masthead-in { padding: 66px 32px 44px; } }
+
+  .eyebrow {
+    font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 18px;
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--accent); flex: none; }
+
+  h1 {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(30px, 5.2vw, 47px); line-height: 1.08; letter-spacing: -.015em;
+    margin: 0 0 20px; text-wrap: balance; max-width: 17ch;
+  }
+
+  .dek {
+    font-size: clamp(16.5px, 2.1vw, 19px); line-height: 1.55;
+    color: var(--ink-muted); max-width: 58ch; margin: 0 0 34px;
+  }
+
+  .facts {
+    display: flex; flex-wrap: wrap; gap: 10px 34px;
+    padding-top: 26px; border-top: 1px solid var(--rule); font-size: 13.5px;
+  }
+  .fact { display: flex; gap: 9px; align-items: baseline; }
+  .fact dt { color: var(--ink-faint); margin: 0; }
+  .fact dd { margin: 0; font-weight: 600; }
+
+  /* ─── Полоса метрик ──────────────────────────────────────────────────── */
+  .metrics {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px; background: var(--rule);
+    border: 1px solid var(--rule); border-radius: 6px; overflow: hidden;
+    margin: 44px 0 8px;
+  }
+  @media (min-width: 640px) { .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .metric { background: var(--surface); padding: 20px 18px; }
+  .metric-n {
+    font-family: var(--font-display); font-weight: 500; font-size: 27px; line-height: 1;
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums; display: block; margin-bottom: 8px;
+  }
+  .metric-n.good { color: var(--accent); }
+  .metric-l { font-size: 12.5px; color: var(--ink-faint); line-height: 1.35; }
+
+  /* ─── Оглавление ─────────────────────────────────────────────────────── */
+  .toc { display: none; }
+  @media (min-width: 1060px) {
+    .toc {
+      display: block; position: sticky; top: 28px; align-self: start;
+      max-height: calc(100vh - 56px); overflow-y: auto;
+      padding: 46px 0 0; font-size: 13px; line-height: 1.4;
+    }
+    .toc-h {
+      font-size: 10.5px; font-weight: 600; letter-spacing: .13em;
+      text-transform: uppercase; color: var(--ink-faint); margin: 0 0 14px;
+    }
+    .toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: toc; }
+    .toc li { counter-increment: toc; }
+    .toc a {
+      display: grid; grid-template-columns: 20px 1fr; gap: 6px;
+      padding: 5px 8px 5px 10px; color: var(--ink-muted); text-decoration: none;
+      border-left: 2px solid transparent; transition: color .12s, border-color .12s;
+    }
+    .toc a::before {
+      content: counter(toc); font-family: var(--font-mono); font-size: 11px;
+      color: var(--ink-faint); font-variant-numeric: tabular-nums;
+    }
+    .toc a:hover { color: var(--ink); border-left-color: var(--rule-strong); }
+    .toc a.flagged { color: var(--flag); font-weight: 600; }
+    .toc a.flagged::before { color: var(--flag); }
+    .toc a.flagged:hover { border-left-color: var(--flag); }
+  }
+
+  /* ─── Секции ─────────────────────────────────────────────────────────── */
+  section { padding-top: 54px; scroll-margin-top: 22px; }
+  section:first-of-type { padding-top: 40px; }
+
+  h2 {
+    font-family: var(--font-body); font-weight: 700;
+    font-size: clamp(21px, 3vw, 25px); line-height: 1.22; letter-spacing: -.012em;
+    margin: 0 0 20px; text-wrap: balance;
+    display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: baseline;
+  }
+  .sn {
+    font-family: var(--font-display); font-weight: 500; font-size: .62em;
+    color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0;
+  }
+  h2:has(+ .lede) { margin-bottom: 10px; }
+  .lede { color: var(--ink-muted); margin: 0 0 22px; max-width: var(--measure); }
+
+  h3 { font-size: 15.5px; font-weight: 600; margin: 30px 0 10px; letter-spacing: -.005em; }
+
+  p, ul, ol { max-width: var(--measure); }
+  p { margin: 0 0 15px; }
+  ul, ol { margin: 0 0 15px; padding-left: 1.15em; }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--ink-faint); }
+
+  /* ─── Таблицы ────────────────────────────────────────────────────────── */
+  .tw {
+    overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px;
+    background: var(--surface); margin: 0 0 18px; -webkit-overflow-scrolling: touch;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-faint); background: var(--surface-alt); white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.nowrap { white-space: nowrap; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td strong { font-weight: 600; }
+
+  /* ─── Код ────────────────────────────────────────────────────────────── */
+  pre.code {
+    margin: 0 0 18px; padding: 16px 18px;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 6px;
+    overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.75;
+    color: var(--ink-muted);
+  }
+  pre.code b { color: var(--ink); font-weight: 500; }
+  pre.code i { font-style: normal; color: var(--accent); }
+  pre.code u { text-decoration: none; color: var(--flag); }
+
+  /* ─── Карточки дефектов ──────────────────────────────────────────────── */
+  .defects { display: flex; flex-direction: column; gap: 16px; }
+  .defect {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 3px solid var(--flag); border-radius: 5px;
+    padding: 20px 22px 6px; box-shadow: var(--shadow);
+  }
+  .defect-h { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; margin-bottom: 12px; }
+  .defect-n {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+    color: var(--flag); font-variant-numeric: tabular-nums; flex: none;
+  }
+  .defect-t { font-weight: 600; font-size: 16.5px; letter-spacing: -.005em; }
+  .defect p { font-size: 15px; max-width: 64ch; }
+  .fixed {
+    font-size: 14px; color: var(--ink-muted);
+    border-top: 1px dashed var(--rule-strong); padding-top: 12px; margin-top: 4px;
+  }
+  .fixed b { color: var(--accent-deep); font-weight: 600; }
+  .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--accent-deep); background: var(--accent-wash);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 3px; padding: 3px 8px; flex: none;
+  }
+
+  /* ─── Команды ────────────────────────────────────────────────────────── */
+  .cmds { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .cmd { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; }
+  .cmd-l {
+    padding: 9px 15px; font-size: 13px; color: var(--ink-muted);
+    border-bottom: 1px solid var(--rule); background: var(--surface-alt);
+  }
+  .cmd pre {
+    margin: 0; padding: 13px 15px; overflow-x: auto;
+    font-family: var(--font-mono); font-size: 13.5px; color: var(--ink);
+  }
+  .cmd pre::before { content: "$ "; color: var(--accent); }
+
+  /* ─── Замечание ──────────────────────────────────────────────────────── */
+  .note {
+    background: var(--accent-wash);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: 6px; padding: 16px 18px; margin-bottom: 18px; font-size: 15px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--accent-deep); }
+
+  footer {
+    border-top: 1px solid var(--rule); margin-top: 64px; padding-top: 26px;
+    font-size: 13.5px; color: var(--ink-faint); max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+  html { scroll-behavior: smooth; }
+</style>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <p class="eyebrow">Ожидает ревью · 26.08.2026</p>
+    <h1>Сервисы Фукуока</h1>
+    <p class="dek">Слой бизнес-логики поверх утверждённой схемы: каталог, заявки, аутентификация, админка. Без зависимости от Next.js и HTTP. UI и транспортный слой не создавались.</p>
+    <dl class="facts">
+      <div class="fact"><dt>Предыдущий этап</dt><dd>Схема данных — утверждена 25.08</dd></div>
+      <div class="fact"><dt>Каталог</dt><dd class="mono">src/server</dd></div>
+      <div class="fact"><dt>Валидация</dt><dd>Zod</dd></div>
+      <div class="fact"><dt>Тесты</dt><dd>node:test, без сторонних зависимостей</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="toc" aria-label="Разделы">
+    <p class="toc-h">Разделы</p>
+    <ol>
+      <li><a href="#s1">Что сделано</a></li>
+      <li><a href="#s2" class="flagged">Найденные ошибки</a></li>
+      <li><a href="#s3">Структура</a></li>
+      <li><a href="#s4">Сервисы</a></li>
+      <li><a href="#s5">Правила в сервисах</a></li>
+      <li><a href="#s6">Мультиязычность</a></li>
+      <li><a href="#s7">Безопасность</a></li>
+      <li><a href="#s8">Проверки</a></li>
+      <li><a href="#s9">Как запустить</a></li>
+      <li><a href="#s10">Ограничения</a></li>
+      <li><a href="#s11">Следующие шаги</a></li>
+    </ol>
+  </nav>
+
+  <main class="col">
+
+    <div class="metrics">
+      <div class="metric"><span class="metric-n">22</span><span class="metric-l">файла, 3288 строк</span></div>
+      <div class="metric"><span class="metric-n">9</span><span class="metric-l">сервисов</span></div>
+      <div class="metric"><span class="metric-n">53</span><span class="metric-l">теста service layer</span></div>
+      <div class="metric"><span class="metric-n good">100</span><span class="metric-l">проверок всего, все пройдены</span></div>
+    </div>
+
+    <!-- 1 -->
+    <section id="s1">
+      <h2><span class="sn">01</span><span>Что сделано</span></h2>
+      <p>Слой бизнес-логики поверх утверждённой схемы: 22 файла, 3288 строк кода и 699 строк тестов.</p>
+      <p>Слой не зависит ни от Next.js, ни от HTTP. Это и есть то, ради чего он выделен: когда на этапе 2–3 понадобится вынести API и фоновые процессы в отдельный сервис, переносится каталог <code>src/server</code> целиком, а бизнес-логика не переписывается.</p>
+      <div class="note">
+        <p><strong>Не создавалось по договорённости:</strong> UI, транспортный слой, <code>Booking</code>, <code>Payment</code>, CRM, адаптер объектного хранилища.</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="s2">
+      <h2><span class="sn">02</span><span>Две ошибки, найденные в процессе</span></h2>
+      <p class="lede">Обе — мои собственные, обе исправлены и закрыты проверками.</p>
+
+      <div class="defects">
+
+        <article class="defect">
+          <div class="defect-h">
+            <span class="defect-n">2.1</span>
+            <span class="defect-t">Депозиты в USD были записаны в долларах, а не в центах</span>
+            <span class="tag">исправлено</span>
+          </div>
+          <p>Соглашение, принятое вместе со схемой: деньги хранятся целыми числами в <strong>минорных</strong> единицах. Для VND минорная единица совпадает с основной, а для USD это цент. В сиде депозиты за байки были записаны как <code>150</code>, что означает залог <strong>$1.50</strong>, а не $150.</p>
+          <p>Ошибка проявилась бы не сразу: цены в VND корректны, и каталог выглядел бы правильно. Разошлось бы только на этапе оплат, когда депозит начал бы реально списываться.</p>
+          <p class="fixed"><b>Исправлено</b> (<code>150 → 15000</code> и далее). В проверку сида добавлен барьер: депозит в USD меньше <code>1000</code> центов считается признаком повторения этой ошибки.</p>
+        </article>
+
+        <article class="defect">
+          <div class="defect-h">
+            <span class="defect-n">2.2</span>
+            <span class="defect-t">Honeypot-поле было мёртвым кодом</span>
+            <span class="tag">исправлено</span>
+          </div>
+          <p>Приманка для ботов объявлялась в схеме как <code>website: z.string().max(0)</code>. Из-за этого zod отбраковывал поле <strong>раньше</strong>, чем срабатывала проверка в теле сервиса: код антибота никогда не выполнялся, а бот получал подробное сообщение об ошибке именно по скрытому полю — то есть система сама подсказывала, на чём он попался.</p>
+          <p>Тест это поймал. Схема теперь принимает поле, а решение принимает сервис.</p>
+          <p class="fixed">Починка вскрыла более общую проблему: наружу летел <code>ZodError</code>. Это означало, что транспортный слой обязан знать про библиотеку валидации, и при выносе API в NestJS такой код пришлось бы переписывать. <b>Добавлен <code>parseInput</code></b>, все 21 точка валидации переведены на него — теперь наружу выходит только доменная <code>ValidationError</code> с разбором по полям.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <h2><span class="sn">03</span><span>Структура</span></h2>
+<pre class="code"><b>src/server/</b>
+├─ index.ts              <i>единственная точка входа для транспорта</i>
+├─ db.ts                 PrismaClient (singleton)
+├─ errors.ts             доменные ошибки: NotFound / Conflict / Validation / …
+├─ authz.ts              Actor и проверки ролей
+├─ pagination.ts         жёсткий потолок perPage
+│
+├─ <b>lib/</b>
+│  ├─ locale.ts          <i>единый слой мультиязычности с фолбэками</i>
+│  ├─ money.ts           BigInt ↔ DTO, минорные единицы
+│  ├─ crypto.ts          argon2id, хэши токенов
+│  ├─ text.ts            slug с транслитерацией, E.164, publicCode
+│  ├─ validate.ts        zod → ValidationError
+│  ├─ audit.ts           журнал в той же транзакции, что и изменение
+│  ├─ idempotency.ts     защита от двойной отправки формы
+│  └─ rate-limit.ts      счётчики попыток
+│
+└─ <b>modules/</b>
+   ├─ auth.service.ts          ├─ favorites.service.ts
+   ├─ users.service.ts         ├─ media.service.ts
+   ├─ catalog.service.ts       ├─ dictionaries.service.ts
+   ├─ listings.service.ts      └─ admin.service.ts
+   └─ requests.service.ts</pre>
+      <p><code>src/server</code> — граница, которую клиентский код не пересекает. Она проходит по каталогу, а не по соглашению об именах файлов.</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <h2><span class="sn">04</span><span>Сервисы</span></h2>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модуль</th><th>Сценарии</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><strong>auth</strong></td><td>регистрация, вход, опаковые сессии, выход, смена пароля, сброс по токену, подтверждение адреса</td></tr>
+            <tr><td class="nowrap"><strong>users</strong></td><td>профиль, список для админки, смена роли, блокировка, список сотрудников</td></tr>
+            <tr><td class="nowrap"><strong>catalog</strong></td><td>поиск с фильтрами, карточка объекта, справочники, подборка на главную</td></tr>
+            <tr><td class="nowrap"><strong>listings</strong></td><td>CRUD объектов, юниты, изображения, публикация с проверкой готовности, архивация</td></tr>
+            <tr><td class="nowrap"><strong>requests</strong></td><td>создание заявки, кабинет, админский список, статусная машина, назначение, заметки</td></tr>
+            <tr><td class="nowrap"><strong>favorites</strong></td><td>добавить, убрать, список, проверка</td></tr>
+            <tr><td class="nowrap"><strong>media</strong></td><td>регистрация файла, медиатека, удаление с защитой используемого</td></tr>
+            <tr><td class="nowrap"><strong>dictionaries</strong></td><td>районы и удобства</td></tr>
+            <tr><td class="nowrap"><strong>admin</strong></td><td>дашборд, журнал аудита</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <h2><span class="sn">05</span><span>Правила, вынесенные в сервисы</span></h2>
+      <p class="lede">Три вещи, которые нельзя было оставить на усмотрение того, кто вызывает.</p>
+
+      <h3>5.1 Смена обложки — только под блокировкой родителя</h3>
+      <p>Правило из решения 7.5 предыдущего этапа, доказанное race-тестом:</p>
+<pre class="code">await prisma.$transaction(async (tx) =&gt; {
+  <b>await lockListing(tx, listingId);</b>   <u>// SELECT … FOR UPDATE — не убирать</u>
+  …
+});</pre>
+      <p>Тот же приём станет основой защиты от двойного бронирования на этапе 2. Механизм отрабатывается заранее на безопасном поле.</p>
+
+      <h3>5.2 Пересчёт цены «от»</h3>
+      <p><code>priceFromAmount</code> — денормализация ради сортировки и списков без JOIN. Её актуальность обеспечивает <code>recomputePriceFrom</code>, вызываемый при любом изменении юнитов: добавление, правка, деактивация, удаление.</p>
+
+      <h3>5.3 Владение проверяется запросом, а не сравнением</h3>
+<pre class="code">prisma.request.findFirst({ where: { id: requestId, <b>userId: actor.id</b> } })</pre>
+      <p>Не «выбрать, потом сравнить». Это единственная надёжная защита от IDOR при росте числа эндпоинтов, и она закрыта отдельным тестом.</p>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <h2><span class="sn">06</span><span>Мультиязычность</span></h2>
+      <p class="lede">Схема поддерживает RU, EN и VI; контент MVP заполняется только на RU.</p>
+      <p>Чтобы добавление языка позже осталось вставкой строк, а не правкой бизнес-логики, <strong>все</strong> чтения переводимого текста идут через <code>lib/locale.ts</code>. Ни один сервис не обращается к <code>translations[0]</code> напрямую.</p>
+      <p>Цепочка фолбэков задана для каждого языка, поэтому страница не окажется пустой из-за отсутствия перевода:</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Запрошен</th><th>Порядок подбора</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap">RU</td><td class="mono">RU → EN → VI</td></tr>
+            <tr><td class="nowrap">EN</td><td class="mono">EN → RU → VI</td></tr>
+            <tr><td class="nowrap">VI</td><td class="mono">VI → EN → RU</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <h2><span class="sn">07</span><span>Безопасность</span></h2>
+      <p class="lede">Что из списка рисков архитектуры закрыто на уровне сервисов.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Риск</th><th>Реализация</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><strong>IDOR</strong></td><td>владение проверяется в запросе; guard на роль отдельно; закрыто тестом на чужую заявку</td></tr>
+            <tr><td class="nowrap">Перебор пароля</td><td>argon2id, ограничение частоты по IP и по адресу, сброс счётчика при удачном входе</td></tr>
+            <tr><td class="nowrap">Enumeration</td><td>одинаковый ответ для несуществующего адреса и неверного пароля; запрос сброса не раскрывает наличие аккаунта</td></tr>
+            <tr><td class="nowrap">Кража сессии</td><td>в базе только sha256 токена; отзыв мгновенный; смена пароля обрывает остальные сессии; блокировка действует немедленно</td></tr>
+            <tr><td class="nowrap">Спам в форме</td><td>ограничение частоты по IP и телефону, honeypot, идемпотентность</td></tr>
+            <tr><td class="nowrap">Загрузка файлов</td><td>SVG запрещён, потолок размера, ключ генерирует только сервер</td></tr>
+            <tr><td class="nowrap">DoS на поиске</td><td>жёсткий потолок <code>perPage</code>, который нельзя обойти параметром</td></tr>
+            <tr><td class="nowrap">Утечка PII</td><td>контакты заявки отдаются только в админском DTO; пользовательский их не содержит</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Ограничение частоты держит счётчики в памяти процесса. Для монолита MVP на одном инстансе этого достаточно; при нескольких инстансах счётчики надо переносить в Redis. Сигнатура <code>consume</code> при этом не меняется, вызывающий код останется прежним. Ограничение записано в комментарии модуля.</p>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <h2><span class="sn">08</span><span>Проверки</span></h2>
+      <p class="lede">Всё запускается <strong>без Docker</strong>: серверы PostgreSQL поднимаются из npm-пакетов.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Набор</th><th>Команда</th><th>Результат</th></tr></thead>
+          <tbody>
+            <tr><td>Типизация</td><td class="nowrap"><code>npm run typecheck</code></td><td>без ошибок</td></tr>
+            <tr><td>Инварианты схемы</td><td class="nowrap"><code>npm run db:verify</code></td><td class="num">16 / 16</td></tr>
+            <tr><td>Гонка при смене обложки</td><td class="nowrap"><code>npm run db:verify:race</code></td><td class="num">4 / 4</td></tr>
+            <tr><td>Сид</td><td class="nowrap"><code>npm run db:verify:seed</code></td><td class="num">27 / 27</td></tr>
+            <tr><td><strong>Service layer</strong></td><td class="nowrap"><code>npm test</code></td><td class="num"><strong>53 / 53</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Что покрывают тесты сервисов</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Группа</th><th class="num">Тестов</th><th>Ключевое</th></tr></thead>
+          <tbody>
+            <tr><td>Локализация</td><td class="num">3</td><td>фолбэк отдаёт текст, а не пустую строку</td></tr>
+            <tr><td>Деньги</td><td class="num">3</td><td>VND без дробной части, USD как центы, дробь отвергается</td></tr>
+            <tr><td>Каталог</td><td class="num">7</td><td>черновик недоступен публично; несколько удобств объединяются по И; потолок <code>perPage</code> не обходится</td></tr>
+            <tr><td>Аутентификация</td><td class="num">10</td><td>неотличимость ответов, ограничение частоты, отзыв сессий, одноразовость токена сброса</td></tr>
+            <tr><td>Заявки</td><td class="num">11</td><td>honeypot, идемпотентность, <strong>IDOR</strong>, статусная машина, запрет заявки на черновик</td></tr>
+            <tr><td>Объекты (админка)</td><td class="num">7</td><td>пересчёт цены, публикация с проверкой готовности, единственность обложки</td></tr>
+            <tr><td>Медиатека</td><td class="num">4</td><td>SVG, лимит размера, защита используемого файла</td></tr>
+            <tr><td>Избранное</td><td class="num">3</td><td>повторяемость без дублей</td></tr>
+            <tr><td>Роли и права</td><td class="num">5</td><td>последний администратор, разделение MANAGER / ADMIN</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Тестовый прогон поднимает настоящий PostgreSQL, применяет миграцию и сид, затем работает на реальных данных.</p>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <h2><span class="sn">09</span><span>Как запустить</span></h2>
+      <div class="cmds">
+        <div class="cmd">
+          <div class="cmd-l">Без Docker: поднимет свой сервер, применит миграцию, выполнит сид и проверит результат</div>
+          <pre>npm run db:verify:seed</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">На своей базе</div>
+          <pre>docker compose up -d &amp;&amp; npm run db:deploy &amp;&amp; npm run db:seed</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">Тесты сервисов</div>
+          <pre>npm test</pre>
+        </div>
+      </div>
+      <p>Пароль всех демо-аккаунтов — <code>demo1234</code>. Администратор: <code>admin@phuquoc.demo</code>.</p>
+      <p>Сид идемпотентен: чистит данные в порядке, учитывающем RESTRICT-связи, и наполняет заново. Повторный запуск проверен отдельным утверждением.</p>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <h2><span class="sn">10</span><span>Известные ограничения</span></h2>
+      <p class="lede">Названы явно, чтобы не выглядели упущением.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Ограничение</th><th>Когда снимается</th></tr></thead>
+          <tbody>
+            <tr><td>Счётчики частоты в памяти процесса — обнуляются при перезапуске и не общие для нескольких инстансов</td><td>при переходе на несколько инстансов, переносом в Redis</td></tr>
+            <tr><td>Presigned-загрузка и проверка magic bytes отсутствуют — есть только учёт файлов и политика допустимости</td><td>вместе с адаптером R2/MinIO</td></tr>
+            <tr><td>Уведомления о новой заявке не отправляются</td><td>следующий шаг, пункт 2</td></tr>
+            <tr><td>Нормализация телефона упрощённая: цифры с ведущим плюсом, без разбора планов нумерации</td><td>при подключении libphonenumber, если понадобится точность</td></tr>
+            <tr><td><code>npm run verify:all</code> последовательно поднимает четыре сервера и потому долгий</td><td>при желании — параллелизация или общий сервер на все наборы</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section id="s11">
+      <h2><span class="sn">11</span><span>Рекомендуемые следующие шаги</span></h2>
+      <ol>
+        <li><strong>Транспортный слой</strong> — route handlers Next.js поверх сервисов: разбор cookie сессии, маппинг <code>AppError.status</code> в HTTP, CSRF-токен. Тонкий слой без бизнес-логики.</li>
+        <li><strong>Уведомления</strong> — Telegram и почта на новую заявку. Сейчас заявка создаётся, но менеджер о ней не узнаёт: это разрыв в главном сценарии конверсии MVP.</li>
+        <li><strong>Адаптер хранилища</strong> — R2/MinIO, presign и проверка magic bytes при подтверждении загрузки. До этого админка не сможет загружать реальные фотографии.</li>
+        <li><strong>UI</strong> — после того, как транспорт зафиксирован.</li>
+      </ol>
+      <p>Порядок именно такой: пункты 2 и 3 закрывают функциональные дыры, из-за которых демо не отработает целиком, а UI поверх готового транспорта делается быстрее и без переделок.</p>
+    </section>
+
+    <footer>
+      Документ описывает состояние на 26.08.2026. Источник — <code>src/server/SERVICE-LAYER-REVIEW.md</code> в репозитории проекта. Предыдущий этап: схема данных, утверждена 25.08.2026.
+    </footer>
+
+  </main>
+</div>

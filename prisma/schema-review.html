@@ -1,0 +1,966 @@
+<title>Схема данных Фукуока</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* ─── Токены: полная светлая палитра ─────────────────────────────────── */
+  :root {
+    --ground:      #F6F8F7;
+    --surface:     #FFFFFF;
+    --surface-alt: #EEF2F1;
+    --ink:         #131A19;
+    --ink-muted:   #566361;
+    --ink-faint:   #7C8886;
+    --rule:        #DCE3E1;
+    --rule-strong: #C3CECB;
+
+    --accent:      #0F6E62;
+    --accent-deep: #0A4E45;
+    --accent-wash: #E4F0ED;
+
+    --flag:        #A9691A;
+    --flag-wash:   #FAEFDF;
+    --flag-rule:   #E5C48F;
+
+    --shadow: 0 1px 2px rgba(19, 26, 25, .05), 0 8px 24px -12px rgba(19, 26, 25, .12);
+
+    --font-display: 'Unbounded', 'Golos Text', system-ui, sans-serif;
+    --font-body: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1312;
+      --surface:     #151D1B;
+      --surface-alt: #1B2523;
+      --ink:         #E3EAE8;
+      --ink-muted:   #93A19E;
+      --ink-faint:   #74827F;
+      --rule:        #253130;
+      --rule-strong: #35443F;
+
+      --accent:      #57C4B2;
+      --accent-deep: #8FDCCD;
+      --accent-wash: #12302B;
+
+      --flag:        #E0A959;
+      --flag-wash:   #2C2113;
+      --flag-rule:   #5C4622;
+
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1312;
+    --surface:     #151D1B;
+    --surface-alt: #1B2523;
+    --ink:         #E3EAE8;
+    --ink-muted:   #93A19E;
+    --ink-faint:   #74827F;
+    --rule:        #253130;
+    --rule-strong: #35443F;
+
+    --accent:      #57C4B2;
+    --accent-deep: #8FDCCD;
+    --accent-wash: #12302B;
+
+    --flag:        #E0A959;
+    --flag-wash:   #2C2113;
+    --flag-rule:   #5C4622;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  /* ─── База ───────────────────────────────────────────────────────────── */
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: .18em; }
+  a:hover { text-decoration-color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code, .mono { font-family: var(--font-mono); font-size: .875em; }
+  p code, li code, td code, .mono-i {
+    font-family: var(--font-mono);
+    font-size: .855em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .08em .34em;
+    white-space: nowrap;
+  }
+
+  /* ─── Каркас ─────────────────────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 22px 96px;
+  }
+
+  @media (min-width: 1060px) {
+    .shell {
+      grid-template-columns: 218px minmax(0, 1fr);
+      gap: 56px;
+      padding: 0 32px 120px;
+    }
+  }
+
+  .col { min-width: 0; max-width: 830px; }
+
+  /* ─── Шапка ──────────────────────────────────────────────────────────── */
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface);
+    margin-bottom: 0;
+  }
+  .masthead-in {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 54px 22px 40px;
+  }
+  @media (min-width: 1060px) { .masthead-in { padding: 66px 32px 44px; } }
+
+  .eyebrow {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 26px; height: 2px;
+    background: var(--accent);
+    flex: none;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(30px, 5.2vw, 47px);
+    line-height: 1.08;
+    letter-spacing: -.015em;
+    margin: 0 0 20px;
+    text-wrap: balance;
+    max-width: 17ch;
+  }
+
+  .dek {
+    font-size: clamp(16.5px, 2.1vw, 19px);
+    line-height: 1.55;
+    color: var(--ink-muted);
+    max-width: 56ch;
+    margin: 0 0 34px;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 34px;
+    padding-top: 26px;
+    border-top: 1px solid var(--rule);
+    font-size: 13.5px;
+  }
+  .fact { display: flex; gap: 9px; align-items: baseline; }
+  .fact dt { color: var(--ink-faint); margin: 0; }
+  .fact dd { margin: 0; font-weight: 600; }
+
+  /* ─── Полоса метрик ──────────────────────────────────────────────────── */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 44px 0 8px;
+  }
+  @media (min-width: 640px) { .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .metric { background: var(--surface); padding: 20px 18px; }
+  .metric-n {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 27px;
+    line-height: 1;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .metric-n.good { color: var(--accent); }
+  .metric-l { font-size: 12.5px; color: var(--ink-faint); line-height: 1.35; }
+
+  /* ─── Оглавление ─────────────────────────────────────────────────────── */
+  .toc { display: none; }
+  @media (min-width: 1060px) {
+    .toc {
+      display: block;
+      position: sticky;
+      top: 28px;
+      align-self: start;
+      max-height: calc(100vh - 56px);
+      overflow-y: auto;
+      padding: 46px 0 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .toc-h {
+      font-size: 10.5px; font-weight: 600; letter-spacing: .13em;
+      text-transform: uppercase; color: var(--ink-faint);
+      margin: 0 0 14px;
+    }
+    .toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: toc; }
+    .toc li { counter-increment: toc; }
+    .toc a {
+      display: grid;
+      grid-template-columns: 20px 1fr;
+      gap: 6px;
+      padding: 5px 8px 5px 0;
+      color: var(--ink-muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      padding-left: 10px;
+      transition: color .12s, border-color .12s;
+    }
+    .toc a::before {
+      content: counter(toc);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-variant-numeric: tabular-nums;
+    }
+    .toc a:hover { color: var(--ink); border-left-color: var(--rule-strong); }
+    .toc a.flagged::before { color: var(--flag); }
+    .toc a.flagged { color: var(--flag); font-weight: 600; }
+    .toc a.flagged:hover { border-left-color: var(--flag); }
+  }
+
+  /* ─── Секции ─────────────────────────────────────────────────────────── */
+  section { padding-top: 54px; scroll-margin-top: 22px; }
+  section:first-of-type { padding-top: 40px; }
+
+  h2 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: clamp(21px, 3vw, 25px);
+    line-height: 1.22;
+    letter-spacing: -.012em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: baseline;
+  }
+  .sn {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: .62em;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+  }
+  h2 + .lede { color: var(--ink-muted); margin: 0 0 22px; max-width: var(--measure); }
+  h2 { margin-bottom: 20px; }
+  h2:has(+ .lede) { margin-bottom: 10px; }
+
+  h3 {
+    font-size: 15.5px;
+    font-weight: 600;
+    margin: 30px 0 10px;
+    letter-spacing: -.005em;
+  }
+
+  p, ul, ol { max-width: var(--measure); }
+  p { margin: 0 0 15px; }
+  ul, ol { margin: 0 0 15px; padding-left: 1.15em; }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--ink-faint); }
+
+  .hr { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  /* ─── Таблицы ────────────────────────────────────────────────────────── */
+  .tw {
+    overflow-x: auto;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--surface);
+    margin: 0 0 18px;
+    -webkit-overflow-scrolling: touch;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td {
+    text-align: left;
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    background: var(--surface-alt);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.nowrap { white-space: nowrap; }
+  td strong { font-weight: 600; }
+
+  /* ─── Правила удаления: чипы ─────────────────────────────────────────── */
+  .rule-chip {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .04em;
+    padding: 3px 7px;
+    border-radius: 3px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .rc-null   { background: var(--accent-wash); color: var(--accent-deep); border-color: color-mix(in srgb, var(--accent) 28%, transparent); }
+  .rc-rest   { background: var(--flag-wash); color: var(--flag); border-color: var(--flag-rule); }
+  .rc-casc   { background: var(--surface-alt); color: var(--ink-muted); border-color: var(--rule-strong); }
+
+  /* ─── Проверки ───────────────────────────────────────────────────────── */
+  .checks {
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--surface);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .check-grp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 15px;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--rule);
+    border-top: 1px solid var(--rule);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .check-grp:first-child { border-top: 0; }
+  .check {
+    display: grid;
+    grid-template-columns: 20px 1fr;
+    gap: 11px;
+    align-items: start;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--rule);
+    font-size: 14.5px;
+  }
+  .check:last-child { border-bottom: 0; }
+  .check::before {
+    content: "✓";
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .check.key { background: var(--accent-wash); }
+  .check.key span { font-weight: 600; }
+
+  /* ─── Карта связей ───────────────────────────────────────────────────── */
+  .map {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+  .map pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    white-space: pre;
+    color: var(--ink-muted);
+  }
+  .map b { color: var(--ink); font-weight: 500; }
+  .map i { font-style: normal; color: var(--accent); }
+  .map u { text-decoration: none; color: var(--flag); }
+
+  /* ─── Карточки решений ───────────────────────────────────────────────── */
+  .decisions { display: flex; flex-direction: column; gap: 14px; }
+  .dec {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--flag);
+    border-radius: 5px;
+    padding: 18px 20px 4px;
+    box-shadow: var(--shadow);
+  }
+  .dec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 11px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .dec-n {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--flag);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .dec-t { font-weight: 600; font-size: 16px; letter-spacing: -.005em; }
+  .dec p { font-size: 15px; max-width: 64ch; }
+  .dec .cost {
+    font-size: 14px;
+    color: var(--ink-muted);
+    border-top: 1px dashed var(--rule-strong);
+    padding-top: 11px;
+    margin-top: 3px;
+  }
+  .cost b { color: var(--ink); font-weight: 600; }
+  .ask {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    background: var(--accent-wash);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 3px;
+    padding: 3px 8px;
+    flex: none;
+  }
+  .dec pre {
+    margin: 0 0 15px;
+    padding: 14px 16px;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-muted);
+  }
+  .dec pre b { color: var(--ink); font-weight: 500; }
+  .dec pre i { font-style: normal; color: var(--flag); }
+
+  /* ─── Команды ────────────────────────────────────────────────────────── */
+  .cmds { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+  .cmd {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .cmd-l {
+    padding: 9px 15px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--rule);
+    background: var(--surface-alt);
+  }
+  .cmd pre {
+    margin: 0;
+    padding: 13px 15px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  .cmd pre::before { content: "$ "; color: var(--accent); }
+
+  /* ─── Замечание ──────────────────────────────────────────────────────── */
+  .note {
+    background: var(--accent-wash);
+    border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+    border-radius: 6px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    font-size: 15px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--accent-deep); }
+
+  /* ─── Подвал ─────────────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--rule);
+    margin-top: 64px;
+    padding-top: 26px;
+    font-size: 13.5px;
+    color: var(--ink-faint);
+    max-width: var(--measure);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+  html { scroll-behavior: smooth; }
+</style>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <p class="eyebrow">Схема утверждена · данные загружены · 25.08.2026</p>
+    <h1>Схема данных Фукуока</h1>
+    <p class="dek">Prisma-схема, миграция и демо-данные MVP: каталог отелей и байков, заявки, кабинет, админка. Кода приложения, UI и API нет — по договорённости.</p>
+    <dl class="facts">
+      <div class="fact"><dt>Основание</dt><dd>ARCHITECTURE.md, разделы 2 и 5</dd></div>
+      <div class="fact"><dt>СУБД</dt><dd>PostgreSQL 16</dd></div>
+      <div class="fact"><dt>ORM</dt><dd>Prisma 6.19</dd></div>
+      <div class="fact"><dt>Миграция</dt><dd class="mono">20260824225039_init</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="toc" aria-label="Разделы">
+    <p class="toc-h">Разделы</p>
+    <ol>
+      <li><a href="#s1">Состав поставки</a></li>
+      <li><a href="#s2">Как проверить</a></li>
+      <li><a href="#s3">Результаты проверки</a></li>
+      <li><a href="#s4">Сущности</a></li>
+      <li><a href="#s5">Карта связей</a></li>
+      <li><a href="#s6">Правила удаления</a></li>
+      <li><a href="#s7" class="flagged">Принятые решения</a></li>
+      <li><a href="#s8">Заготовки на будущее</a></li>
+      <li><a href="#s9">Чего нет и почему</a></li>
+      <li><a href="#s10">Демо-данные</a></li>
+      <li><a href="#s11">Следующий шаг</a></li>
+    </ol>
+  </nav>
+
+  <main class="col">
+
+    <div class="metrics">
+      <div class="metric"><span class="metric-n">21</span><span class="metric-l">таблица</span></div>
+      <div class="metric"><span class="metric-n">74</span><span class="metric-l">индекса, из них 53 явных</span></div>
+      <div class="metric"><span class="metric-n">30</span><span class="metric-l">объектов в демо-каталоге</span></div>
+      <div class="metric"><span class="metric-n good">46/46</span><span class="metric-l">проверок пройдено</span></div>
+    </div>
+
+    <!-- 1 ─────────────────────────────────────────────────────────────── -->
+    <section id="s1">
+      <h2><span class="sn">01</span><span>Состав поставки</span></h2>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Файл</th><th>Назначение</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>prisma/schema.prisma</code></td><td>Схема: 21 модель, 13 enum'ов, комментарии к каждому нетривиальному решению</td></tr>
+            <tr><td class="nowrap"><code>migrations/…_init/migration.sql</code></td><td>Сгенерированный SQL начальной миграции</td></tr>
+            <tr><td class="nowrap"><code>migrations/migration_lock.toml</code></td><td>Фиксация провайдера (postgresql)</td></tr>
+            <tr><td class="nowrap"><code>prisma/verify-schema.mjs</code></td><td>Скрипт проверки миграции и инвариантов</td></tr>
+            <tr><td class="nowrap"><code>docker-compose.yml</code></td><td>Локальный PostgreSQL 16</td></tr>
+            <tr><td class="nowrap"><code>.env.example</code></td><td>Переменные окружения; заполнен только <code>DATABASE_URL</code></td></tr>
+            <tr><td class="nowrap"><code>package.json</code></td><td>Только Prisma и PGlite. Next.js и зависимости приложения не установлены</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2 ─────────────────────────────────────────────────────────────── -->
+    <section id="s2">
+      <h2><span class="sn">02</span><span>Как проверить самостоятельно</span></h2>
+      <p class="lede">Не полагайся на отчёт — проверки воспроизводимы. <strong>Docker и установленный PostgreSQL не нужны</strong>: серверы поднимаются из npm-пакетов.</p>
+      <div class="cmds">
+        <div class="cmd">
+          <div class="cmd-l">Все 46 проверок: схема, гонка при смене обложки, сид</div>
+          <pre>npm run db:verify:all</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">Инварианты схемы отдельно — 16 проверок, Postgres в WASM</div>
+          <pre>npm run db:verify</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">Гонка при смене обложки — настоящий Postgres, параллельные соединения</div>
+          <pre>npm run db:verify:race</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">Сид на настоящей базе с проверкой объёмов и инвариантов</div>
+          <pre>npm run db:verify:seed</pre>
+        </div>
+        <div class="cmd">
+          <div class="cmd-l">Прогон на своей базе (нужен Docker)</div>
+          <pre>docker compose up -d &amp;&amp; npm run db:deploy &amp;&amp; npm run db:seed</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 ─────────────────────────────────────────────────────────────── -->
+    <section id="s3">
+      <h2><span class="sn">03</span><span>Результаты проверки</span></h2>
+      <p class="lede">Миграция <strong>фактически применена</strong> к настоящему PostgreSQL, а не только сгенерирована. Всего 46 проверок в трёх наборах — все пройдены.</p>
+
+      <div class="note">
+        <p><strong>Воспроизводимость миграции.</strong> Регенерация из схемы даёт файл, побайтово совпадающий с зафиксированным (<code>sha256 1cb68495…</code>). Схема и миграция не разошлись.</p>
+      </div>
+
+      <h3>Набор 1 — инварианты схемы, 16 проверок</h3>
+      <p>Проверки идут на живых данных: скрипт создаёт район, пользователя, объект с переводом, юнитом, удобством и фото, заявку с датами — и затем пытается выполнить операции, которые база обязана отклонить.</p>
+
+      <div class="checks">
+        <div class="check-grp">Типы колонок</div>
+        <div class="check"><span>Все денежные колонки — <code>bigint</code> (целые минорные единицы)</span></div>
+        <div class="check"><span>Все отметки времени — <code>timestamptz</code></span></div>
+        <div class="check"><span>Даты аренды — <code>date</code>: <code>Request.dateFrom</code>, <code>Request.dateTo</code></span></div>
+
+        <div class="check-grp">Restrict — база не даёт удалить</div>
+        <div class="check"><span>Район, в котором есть объекты</span></div>
+        <div class="check"><span>Медиа, которое используется</span></div>
+        <div class="check"><span>Автора комментария, пока есть заметки</span></div>
+
+        <div class="check-grp">Unique — база не даёт задвоить</div>
+        <div class="check"><span>Перевод <code>listing + locale</code></span></div>
+        <div class="check"><span>Связь объект + удобство (составной PK)</span></div>
+        <div class="check"><span><code>publicCode</code> заявки</span></div>
+        <div class="check"><span>Email пользователя</span></div>
+
+        <div class="check-grp">Set null — данные переживают удаление</div>
+        <div class="check key"><span>Заявка пережила удаление объекта и аккаунта, ссылки обнулены</span></div>
+
+        <div class="check-grp">Cascade — части объекта уходят вместе с ним</div>
+        <div class="check"><span>Переводы удалены вместе с объектом</span></div>
+        <div class="check"><span>Юниты удалены вместе с объектом</span></div>
+        <div class="check"><span>Связи с удобствами удалены вместе с объектом</span></div>
+        <div class="check"><span>Привязки изображений удалены вместе с объектом</span></div>
+        <div class="check"><span>Файл при этом остался в медиатеке</span></div>
+      </div>
+
+      <h3>Набор 2 — гонка при смене обложки, 4 проверки</h3>
+      <p>Настоящий PostgreSQL 18.4 с реальными параллельными соединениями: PGlite однопользовательский, гонку на нём не воспроизвести. Вывод — в разделе 7.5.</p>
+      <div class="checks">
+        <div class="check key"><span>Наивный сервис без блокировки действительно оставляет ДВЕ обложки</span></div>
+        <div class="check"><span>С блокировкой строки <code>Listing</code> остаётся ровно одна обложка</span></div>
+        <div class="check"><span>Побеждает последняя завершившаяся транзакция</span></div>
+        <div class="check"><span>Десять одновременных запросов — по-прежнему одна обложка</span></div>
+      </div>
+
+      <h3>Набор 3 — сид на настоящей базе, 26 проверок</h3>
+      <p>Согласованные объёмы, инварианты данных и идемпотентность повторного запуска. Состав данных — в разделе 10.</p>
+    </section>
+
+    <!-- 4 ─────────────────────────────────────────────────────────────── -->
+    <section id="s4">
+      <h2><span class="sn">04</span><span>Сущности — 21 модель</span></h2>
+
+      <h3>Пользователи и доступ · 3</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модель</th><th>Роль</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>User</code></td><td>Аккаунт. Email хранится в нижнем регистре (нормализация в service layer), пароль — argon2id. <code>phoneNormalized</code> в E.164 — основа будущей дедупликации клиентов в CRM</td></tr>
+            <tr><td class="nowrap"><code>Session</code></td><td>Опаковая серверная сессия. В cookie уходит токен, в БД — только его хэш: дамп базы не даёт войти под пользователем</td></tr>
+            <tr><td class="nowrap"><code>UserToken</code></td><td>Одноразовые токены. Одна таблица на подтверждение email и сброс пароля — различаются полем <code>type</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Справочники · 4</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модель</th><th>Роль</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>Area</code> + <code>AreaTranslation</code></td><td>Районы Фукуока. Дают фильтр каталога и SEO-страницы <code>/hotels/ong-lang</code></td></tr>
+            <tr><td class="nowrap"><code>Amenity</code> + <code>AmenityTranslation</code></td><td>Удобства отелей и опции байков. <code>scope</code> разделяет применимость, <code>group</code> — код группы для админки</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Каталог · 9</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модель</th><th>Роль</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>Listing</code></td><td><strong>Общая сущность каталога.</strong> Всё, что одинаково для любого типа объекта — модерация, локация, фото, заявки, будущие брони — связано с этой таблицей</td></tr>
+            <tr><td class="nowrap"><code>ListingTranslation</code></td><td>Переводимые тексты объекта + SEO-переопределения</td></tr>
+            <tr><td class="nowrap"><code>HotelDetails</code></td><td>Расширение 1:1, PK = <code>listingId</code>. Звёзды, время заезда, расстояния, число номеров</td></tr>
+            <tr><td class="nowrap"><code>BikeDetails</code></td><td>Расширение 1:1. Марка, модель, объём двигателя, коробка, залог, доставка</td></tr>
+            <tr><td class="nowrap"><code>ListingUnit</code></td><td><strong>Единица инвентаря.</strong> Отель → тип номера, байк → модель. <code>quantity</code> — сколько таких единиц существует</td></tr>
+            <tr><td class="nowrap"><code>ListingUnitTranslation</code></td><td>Название и описание юнита</td></tr>
+            <tr><td class="nowrap"><code>ListingAmenity</code></td><td>Связь объект ↔ удобство, составной первичный ключ</td></tr>
+            <tr><td class="nowrap"><code>MediaAsset</code></td><td>Файл в объектном хранилище. <code>width</code>/<code>height</code> известны при загрузке → карточки рендерятся без layout shift</td></tr>
+            <tr><td class="nowrap"><code>ListingImage</code></td><td>Привязка изображения к объекту: порядок, обложка, alt</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Заявки и кабинет · 3</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модель</th><th>Роль</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>Request</code></td><td><strong>Заявка (лид).</strong> Ничего не блокирует. Содержит даты, юнит и количество — именно они конвертируются в бронь на этапе 2</td></tr>
+            <tr><td class="nowrap"><code>RequestNote</code></td><td>Внутренний комментарий менеджера, клиенту не виден. Прототип ленты активности в CRM</td></tr>
+            <tr><td class="nowrap"><code>Favorite</code></td><td>Избранное. Составной PK <code>(userId, listingId)</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Служебное · 2</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Модель</th><th>Роль</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>AuditLog</code></td><td>Универсальный журнал. <code>entity</code>/<code>entityId</code> — строки, а не связи: журнал переживает удаление объекта и не требует миграции при появлении <code>Booking</code>, <code>Payment</code>, <code>Deal</code></td></tr>
+            <tr><td class="nowrap"><code>IdempotencyKey</code></td><td>Результаты идемпотентных POST. В MVP — только защита формы заявки от двойной отправки; на этапах 2–3 тот же механизм закрывает брони и платёжные вебхуки</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5 ─────────────────────────────────────────────────────────────── -->
+    <section id="s5">
+      <h2><span class="sn">05</span><span>Карта связей</span></h2>
+      <div class="map">
+<pre><b>User</b> ──1:N──&gt; Session, UserToken, Favorite            <i>[CASCADE]</i>
+<b>User</b> ──1:N──&gt; Listing        (owner, nullable)        <i>[SET NULL]</i>
+<b>User</b> ──1:N──&gt; Request        (автор, nullable)        <i>[SET NULL]</i>
+<b>User</b> ──1:N──&gt; Request        (ответственный менеджер) <i>[SET NULL]</i>
+<b>User</b> ──1:N──&gt; RequestNote    (автор заметки)          <u>[RESTRICT]</u>
+<b>User</b> ──1:N──&gt; MediaAsset, AuditLog                    <i>[SET NULL]</i>
+
+<b>Area</b> ──1:N──&gt; AreaTranslation                         <i>[CASCADE]</i>
+<b>Area</b> ──1:N──&gt; Listing                                 <u>[RESTRICT]</u>
+
+<b>Amenity</b> ──1:N──&gt; AmenityTranslation                   <i>[CASCADE]</i>
+
+<b>Listing</b> ──1:1──&gt; HotelDetails | BikeDetails           <i>[CASCADE]</i>
+<b>Listing</b> ──1:N──&gt; ListingTranslation                   <i>[CASCADE]</i>
+<b>Listing</b> ──1:N──&gt; ListingUnit ──1:N──&gt; …Translation    <i>[CASCADE]</i>
+<b>Listing</b> ──N:M──&gt; Amenity     (через ListingAmenity)   <i>[CASCADE]</i>
+<b>Listing</b> ──1:N──&gt; ListingImage ──N:1──&gt; MediaAsset     <i>[CASCADE]</i> / <u>[RESTRICT]</u>
+<b>Listing</b> ──1:N──&gt; Request                              <i>[SET NULL]</i>
+<b>Listing</b> ──N:M──&gt; User        (через Favorite)         <i>[CASCADE]</i>
+
+<b>ListingUnit</b> ──1:N──&gt; Request (nullable)               <i>[SET NULL]</i>
+
+<b>Request</b> ──1:N──&gt; RequestNote                          <i>[CASCADE]</i></pre>
+      </div>
+      <p><code>Listing</code> имеет две связи на <code>User</code>, <code>Request</code> — две (автор и ответственный менеджер), поэтому связи именованные: <code>ListingOwner</code>, <code>RequestAuthor</code>, <code>RequestAssignee</code>.</p>
+    </section>
+
+    <!-- 6 ─────────────────────────────────────────────────────────────── -->
+    <section id="s6">
+      <h2><span class="sn">06</span><span>Правила удаления — это бизнес-решения</span></h2>
+      <p class="lede">Самая содержательная часть для ревью: <code>onDelete</code> определяет, что происходит с данными при удалении связанной записи.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Связь</th><th>Правило</th><th>Почему именно так</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>Request → Listing</code> / <code>ListingUnit</code> / <code>User</code></td>
+              <td class="nowrap"><span class="rule-chip rc-null">SET NULL</span></td>
+              <td>Заявка не должна исчезать вместе с объектом или аккаунтом — это лид, источник данных для будущей CRM и предмет возможного спора</td>
+            </tr>
+            <tr>
+              <td><code>Listing → Area</code></td>
+              <td class="nowrap"><span class="rule-chip rc-rest">RESTRICT</span></td>
+              <td>Нельзя удалить район, в котором есть объекты. Скрытие района — через <code>isActive</code>, а не удалением</td>
+            </tr>
+            <tr>
+              <td><code>ListingImage → MediaAsset</code></td>
+              <td class="nowrap"><span class="rule-chip rc-rest">RESTRICT</span></td>
+              <td>Нельзя удалить файл, пока он где-то используется</td>
+            </tr>
+            <tr>
+              <td><code>RequestNote → User</code> (автор)</td>
+              <td class="nowrap"><span class="rule-chip rc-rest">RESTRICT</span></td>
+              <td>Автор комментария не удаляется. Менеджеры блокируются (<code>status = BLOCKED</code>), а не стираются</td>
+            </tr>
+            <tr>
+              <td>Переводы, юниты, связи с удобствами, изображения, <code>HotelDetails</code>, <code>BikeDetails</code> → <code>Listing</code></td>
+              <td class="nowrap"><span class="rule-chip rc-casc">CASCADE</span></td>
+              <td>Части объекта не имеют смысла без него. При этом сам файл в <code>MediaAsset</code> остаётся</td>
+            </tr>
+            <tr>
+              <td><code>Session</code>, <code>UserToken</code>, <code>Favorite</code> → <code>User</code></td>
+              <td class="nowrap"><span class="rule-chip rc-casc">CASCADE</span></td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><code>Listing → User</code> (owner), <code>AuditLog → User</code> (actor), <code>MediaAsset → User</code></td>
+              <td class="nowrap"><span class="rule-chip rc-null">SET NULL</span></td>
+              <td>Объект и журнал переживают удаление аккаунта</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7 ─────────────────────────────────────────────────────────────── -->
+    <section id="s7">
+      <h2><span class="sn">07</span><span>Принятые решения</span></h2>
+      <p class="lede">Семь мест, где выбор был неочевиден. Все подтверждены 25.08.2026 и зафиксированы в схеме.</p>
+
+      <div class="decisions">
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.1</span><span class="dec-t">Деньги — <code>BigInt</code>, а не <code>Int</code></span></div>
+          <p><code>Int</code> кончается на 2 147 483 647 VND (≈ 85 000 $). Для цены за ночь достаточно, для сумм броней и будущего ledger — нет, а менять тип колонки на живых данных означает перезапись таблицы и правку всех типов в коде.</p>
+          <p class="cost"><b>Цена решения:</b> <code>BigInt</code> не сериализуется в JSON штатно. Форматирование денег обязано идти через маппер service layer — он и так предусмотрен архитектурой.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.2</span><span class="dec-t"><code>timestamptz</code> вместо <code>timestamp</code></span></div>
+          <p>Prisma по умолчанию генерирует <code>TIMESTAMP(3)</code> <strong>без</strong> таймзоны. Проставил <code>@db.Timestamptz(3)</code> всем 28 полям времени. Без этого прямой SQL, BI-инструменты и будущий вынос API в NestJS могут прочитать время неверно. Даты аренды при этом остались <code>DATE</code> — ночь это календарный день, а не момент времени.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.3</span><span class="dec-t"><code>uuid(7)</code> генерируется Prisma Client, а не базой</span></div>
+          <p>У колонок нет <code>DEFAULT gen_random_uuid()</code>.</p>
+          <p class="cost"><b>Плюс:</b> версия 7 упорядочена по времени — хорошая локальность индекса и естественная сортировка. <b>Минус:</b> вставки чистым SQL обязаны передавать <code>id</code> явно. В сиде это учтено.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.4</span><span class="dec-t"><code>slug</code> канонический, один на все языки</span><span class="ask">подтверждено</span></div>
+          <p>URL будут <code>/ru/hotels/villa-sunrise</code> и <code>/en/hotels/villa-sunrise</code> — один слаг, разный контент. Отдельные слаги по языкам добавляются позже полем в <code>ListingTranslation</code> с фолбэком в резолвере.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.5</span><span class="dec-t">Единственность обложки держит service layer — с обязательным условием</span></div>
+          <p>Prisma не поддерживает частичные unique-индексы (<code>WHERE isCover = true</code>), а сырой SQL в миграции ломает <code>prisma migrate dev</code> — расхождение схемы и теневой базы. Решение оставлено за service layer.</p>
+          <p><strong>Тест на конкурентное обновление показал, что очевидная реализация ломается.</strong> Наивная последовательность «снять флаг со всех → поставить нужному» под параллельной нагрузкой оставляет <strong>две обложки</strong>. Механика гонки в PostgreSQL при READ COMMITTED:</p>
+<pre><b>T1:</b> UPDATE … SET isCover=false WHERE listingId=X AND isCover=true   <i>→ блокирует строку A</i>
+<b>T2:</b> UPDATE … SET isCover=false WHERE listingId=X AND isCover=true   <i>→ ждёт на строке A</i>
+<b>T1:</b> UPDATE … SET isCover=true  WHERE id=B
+<b>T1:</b> COMMIT
+<b>T2:</b> <i>разблокирован. Строка A уже false и под условие не подходит.</i>
+    <i>Строку B он не видит: на старте его UPDATE она была false.</i>
+    <i>В итоге T2 не снимает ничего.</i>
+<b>T2:</b> UPDATE … SET isCover=true  WHERE id=C
+<b>T2:</b> COMMIT
+                                    <i>→ обложки B и C. Инвариант нарушен.</i></pre>
+          <p><strong>Обязательный рецепт:</strong> транзакция смены обложки начинается с блокировки родительской строки.</p>
+<pre>BEGIN;
+<b>SELECT id FROM "Listing" WHERE id = $1 FOR UPDATE;</b>   <i>-- сериализует смену</i>
+UPDATE "ListingImage" SET "isCover"=false WHERE "listingId"=$1 AND "isCover"=true;
+UPDATE "ListingImage" SET "isCover"=true  WHERE id=$2;
+COMMIT;</pre>
+          <p class="cost"><b>Проверено:</b> с блокировкой два параллельных запроса дают одну обложку, десять одновременных — тоже одну. Тест зафиксирован в репозитории (<code>npm run db:verify:race</code>), чтобы регрессия в service layer была поймана. Тот же приём — основа защиты от двойного бронирования на этапе 2: механизм отрабатывается заранее на безопасном поле.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.6</span><span class="dec-t"><code>ListingImage.alt</code> — единственный переводимый текст вне translation-таблицы</span></div>
+          <p>Пятая таблица переводов ради alt-текста показалась несоразмерной. Заполняется на языке контента.</p>
+        </article>
+
+        <article class="dec">
+          <div class="dec-h"><span class="dec-n">7.7</span><span class="dec-t"><code>Amenity.group</code> — строковый код, а не отдельная таблица</span></div>
+          <p>Группы удобств («internet», «food», «equipment») нужны только для группировки в админке. Подписи живут в словарях интерфейса.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 8 ─────────────────────────────────────────────────────────────── -->
+    <section id="s8">
+      <h2><span class="sn">08</span><span>Заготовки под будущие этапы</span></h2>
+      <p class="lede">Стоили ноль сейчас, в MVP не используются.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Заготовка</th><th>Для чего</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>ListingStatus.PENDING</code></td><td>Этап 6: объект партнёра ждёт модерации</td></tr>
+            <tr><td class="nowrap"><code>UserRole.PARTNER</code></td><td>Этап 6: кабинет партнёра</td></tr>
+            <tr><td class="nowrap"><code>Listing.ownerId</code> (nullable)</td><td>Этап 6: объект принадлежит не платформе</td></tr>
+            <tr><td class="nowrap"><code>IdempotencyKey</code></td><td>Этапы 2–3: создание броней, платёжные вебхуки</td></tr>
+            <tr><td class="nowrap"><code>Request.utm</code> (Json)</td><td>Этап 4: маркетинговая атрибуция в CRM</td></tr>
+            <tr><td class="nowrap"><code>Request.contactPhoneNormalized</code></td><td>Этап 4: дедупликация в сущность <code>Client</code></td></tr>
+            <tr><td class="nowrap"><code>AuditLog</code> со строковым <code>entity</code></td><td>Все этапы: журнал не требует миграции под новые сущности</td></tr>
+            <tr><td class="nowrap"><code>ListingUnit.quantity</code></td><td>Этап 2: ёмкость для проверки <code>bookedCount + qty &lt;= quantity</code></td></tr>
+            <tr><td class="nowrap"><code>PriceUnit</code>, <code>ListingType</code>, <code>RequestSource</code></td><td>Расширяются новыми значениями без миграции данных</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 ─────────────────────────────────────────────────────────────── -->
+    <section id="s9">
+      <h2><span class="sn">09</span><span>Чего в схеме сознательно нет</span></h2>
+      <div class="note">
+        <p><strong><code>Booking</code>, <code>UnitAvailabilityDay</code>, <code>RatePlan</code>, <code>Payment</code>, <code>Client</code>, <code>Deal</code>, отзывы.</strong></p>
+        <p>Это не упущение: пустые неиспользуемые таблицы усложняют схему и всё равно будут спроектированы точнее, когда дойдём до задачи. Текущая модель им не мешает — см. раздел 8.</p>
+      </div>
+    </section>
+
+    <!-- 10 ────────────────────────────────────────────────────────────── -->
+    <section id="s10">
+      <h2><span class="sn">10</span><span>Демо-данные</span></h2>
+      <p class="lede"><code>prisma/seed.ts</code> выполнен на настоящем PostgreSQL и проверен 26 утверждениями.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Что</th><th>Сколько</th></tr></thead>
+          <tbody>
+            <tr><td>Районы Фукуока</td><td><strong>7</strong> — Дуонг Донг, Онг Ланг, Бай Труонг, Бай Сао, Ан Тхой, Куа Кан, Ган Дау</td></tr>
+            <tr><td>Отели</td><td><strong>18</strong> (согласовано 15–20)</td></tr>
+            <tr><td>Байки</td><td><strong>12</strong> (согласовано 10–15)</td></tr>
+            <tr><td>Словарь удобств и опций</td><td>32</td></tr>
+            <tr><td><code>ListingUnit</code></td><td>61</td></tr>
+            <tr><td>Изображения</td><td>120</td></tr>
+            <tr><td>Связи с удобствами</td><td>222</td></tr>
+            <tr><td>Пользователи</td><td>7 — 1 ADMIN, 2 MANAGER, 4 USER</td></tr>
+            <tr><td>Заявки</td><td>10 во всех пяти статусах</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Разброс цен реалистичный:</strong> отели от 180 000 (койка в хостеле) до 8 400 000 VND за ночь (вилла на мысе у Бай Сао); байки от 120 000 (Honda Wave Alpha) до 500 000 VND за сутки (эндуро Honda XR 150L).</p>
+
+      <p><strong>Покрыты состояния для админки:</strong> объекты <code>PUBLISHED</code> 27, <code>DRAFT</code> 2, <code>ARCHIVED</code> 1; заявки <code>NEW</code> 4, <code>IN_PROGRESS</code> 2, <code>CONFIRMED</code> 2, <code>CANCELLED</code> 1, <code>COMPLETED</code> 1; заявки как от гостей (6), так и от зарегистрированных (4).</p>
+
+      <p><strong>Тарифные схемы:</strong> у части байков два юнита — посуточный и от 7 дней по сниженной цене (<code>minDuration</code>); у отелей от двух до трёх типов номеров.</p>
+
+      <h3>Особенности реализации</h3>
+      <ul>
+        <li>контент <strong>только на RU</strong> — как договорились; добавление EN и VI является вставкой строк в <code>*Translation</code>;</li>
+        <li><code>priceFromAmount</code> считается как минимум по активным юнитам — тем же правилом, которое затем реализует service layer;</li>
+        <li>пароль всех демо-аккаунтов <code>demo1234</code>, хэш настоящий argon2id — аккаунты заработают сразу, как появится авторизация;</li>
+        <li>изображения — стабильные плейсхолдеры <code>picsum.photos</code> с фиксированным seed на объект; реальные фото загружаются через админку;</li>
+        <li>сид идемпотентен: повторный запуск не дублирует данные (проверено).</li>
+      </ul>
+    </section>
+
+    <!-- 11 ────────────────────────────────────────────────────────────── -->
+    <section id="s11">
+      <h2><span class="sn">11</span><span>Следующий шаг</span></h2>
+      <p>Схема, миграция и данные готовы. Дальше — service layer: репозитории, доменные сервисы каталога и заявок, локализующий маппер.</p>
+      <p>Именно он обязан реализовать два правила, зафиксированных проверками: пересчёт <code>priceFromAmount</code> при правке юнитов и блокировку родителя при смене обложки (раздел 7.5).</p>
+    </section>
+
+    <footer>
+      Документ описывает состояние на 25.08.2026. Источник — <code>prisma/SCHEMA-REVIEW.md</code> в репозитории проекта.
+    </footer>
+
+  </main>
+</div>

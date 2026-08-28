@@ -1,0 +1,334 @@
+.section {
+  position: relative;
+  overflow: hidden;
+  /* Светлая вода, как в референсе: блок читается как продолжение пляжа,
+     а не как тёмная вставка посреди страницы. */
+  background: linear-gradient(150deg, var(--color-aqua) 0%, #e8f5f2 46%, var(--color-cream) 100%);
+  color: var(--color-ink);
+  padding-block: clamp(3.5rem, 7vw, 6rem);
+}
+
+/* Тёплое зарево из-за острова — тот же источник света, что в сцене героя. */
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    52% 60% at 76% 28%,
+    color-mix(in srgb, var(--color-gold) 26%, transparent),
+    transparent 68%
+  );
+}
+
+.grid {
+  position: relative;
+  /* Листья — декор, и они не должны попадать поверх текста и списка мест. */
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(2.5rem, 5vw, 4rem);
+  align-items: center;
+}
+@media (min-width: 980px) {
+  .grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1fr);
+  }
+}
+
+.copy :global(.eyebrow) {
+  color: var(--color-teal-mid);
+}
+.copy :global(.lede) {
+  color: var(--color-ink-soft);
+}
+
+/* ── Четыре повода приехать ───────────────────────────────────────────── */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 1rem;
+  margin: clamp(2rem, 4vw, 3rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 620px) {
+  .features {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.features li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--color-ink);
+}
+.features li svg {
+  color: var(--color-teal);
+}
+.featureLabel {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+.featureNote {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--color-ink-soft);
+}
+
+.mapWrap {
+  position: relative;
+}
+
+/* ── Вкладки над картой ───────────────────────────────────────────────── */
+
+.tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1.25rem);
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-cream) 82%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-teal) 12%, transparent);
+}
+
+.tab {
+  padding: 0.45rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-ink-soft);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.25s var(--ease-out-soft),
+    color 0.25s var(--ease-out-soft);
+}
+.tab:hover {
+  color: var(--color-teal);
+}
+.tab[data-active='true'] {
+  background: var(--color-teal);
+  color: var(--color-shell);
+}
+
+/* ── Карта достопримечательностей ─────────────────────────────────────────
+   Снимок острова с высоты. Маркеры лежат в долях кадра, поэтому держатся
+   своих мест при любой ширине блока.
+   ───────────────────────────────────────────────────────────────────── */
+
+.photoMap {
+  position: relative;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 30px 60px -34px rgb(4 30 38 / 0.75);
+}
+.photoMapImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.sights {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sight {
+  position: absolute;
+}
+
+/*
+ * Маркер: номер всегда, название — у выбранного и под курсором. Показывать
+ * все восемь подписей разом нельзя, они перекрывают половину острова.
+ *
+ * Размер кнопки — это размер только кружка с номером: она центруется по своей
+ * точке, и подпись в этот расчёт входить не должна, иначе номер уезжает в
+ * сторону на половину названия. Поэтому подпись вынесена из потока и висит
+ * сбоку от кружка.
+ */
+.sightBtn {
+  position: relative;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-shell);
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+/* Палец крупнее точки: зона нажатия шире самого маркера, на вид ничего не
+   меняется. */
+.sightBtn::after {
+  content: '';
+  position: absolute;
+  inset: -0.6rem;
+  border-radius: 999px;
+}
+
+.sightDot {
+  display: grid;
+  place-items: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  flex: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, #06222b 70%, transparent);
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--color-shell) 75%, transparent),
+    0 8px 18px -8px rgb(4 30 38 / 0.9);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition:
+    background 0.25s var(--ease-out-soft),
+    transform 0.25s var(--ease-out-soft);
+}
+.sightBtn:hover .sightDot {
+  transform: scale(1.12);
+}
+.sightBtn[data-active='true'] .sightDot {
+  background: var(--color-gold);
+  color: #17282f;
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--color-shell) 85%, transparent),
+    0 0 0 5px color-mix(in srgb, var(--color-gold) 30%, transparent);
+}
+
+.sightChip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.4rem);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, #06222b 76%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-0.35rem, -50%);
+  transition:
+    opacity 0.25s var(--ease-out-soft),
+    transform 0.25s var(--ease-out-soft);
+}
+/* У правого края острова подпись уходит влево, иначе вылезает за кадр. */
+.sightBtn[data-side='left'] .sightChip {
+  left: auto;
+  right: calc(100% + 0.4rem);
+  transform: translate(0.35rem, -50%);
+}
+.sightBtn:hover .sightChip,
+.sightBtn[data-active='true'] .sightChip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* ── Список мест под картой ───────────────────────────────────────────── */
+
+.sightList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.75rem;
+  margin: clamp(1rem, 2vw, 1.5rem) 0 0;
+  padding: 0;
+  list-style: none;
+}
+/* Своя подложка: под списком проходят листья, на просвет названия читались
+   бы плохо. */
+.sightItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-shell) 55%, transparent);
+  color: var(--color-ink-soft);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.25s var(--ease-out-soft),
+    color 0.25s var(--ease-out-soft),
+    border-color 0.25s var(--ease-out-soft);
+}
+.sightItem svg {
+  flex: none;
+  color: var(--color-teal-mid);
+}
+.sightItem:hover {
+  background: color-mix(in srgb, var(--color-shell) 82%, transparent);
+  color: var(--color-ink);
+}
+.sightItem[data-active='true'] {
+  border-color: color-mix(in srgb, var(--color-gold) 55%, transparent);
+  background: color-mix(in srgb, var(--color-shell) 78%, transparent);
+  color: var(--color-ink);
+}
+.sightNum {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-teal) 12%, transparent);
+  color: var(--color-teal);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sightItem[data-active='true'] .sightNum {
+  background: var(--color-gold);
+  color: #17282f;
+}
+.sightItemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Подпись под картой ───────────────────────────────────────────────── */
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: clamp(1rem, 2vw, 1.75rem) 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+.detailName {
+  font-weight: 600;
+  color: var(--color-ink);
+}
+.detailCoords {
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  color: var(--color-gold-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  /* Пальцем в подпись не попасть — на телефоне выбирают из списка под картой,
+     а на карте остаются номера. */
+  .sightChip {
+    display: none;
+  }
+  .sightDot {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.6875rem;
+  }
+  .sightList {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -1,0 +1,399 @@
+@import 'tailwindcss';
+
+/* ═════════════════════════════════════════════════════════════════════════
+   Дизайн-система «Фукуок»
+
+   Направление задано референсом: тёплый кремовый лист, глубокая бирюза как
+   фирменный тон, золотое солнце на действиях и светло-голубой на воде.
+   Полдень и закат на берегу, а не тёмный интерфейс.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Лист */
+  --color-cream: #fbf6ee;
+  --color-sand: #f3e9d9;
+  --color-shell: #ffffff;
+
+  /* Фирменная бирюза */
+  --color-teal: #0f4c5c;
+  --color-teal-mid: #14657c;
+  --color-teal-soft: #7fc5de;
+  --color-lagoon: #4bb3cc;
+
+  /* Действия */
+  --color-gold: #f0b429;
+  --color-gold-deep: #d99a15;
+  --color-ember: #e8913a;
+
+  /* Светлая вода — фон блока острова */
+  --color-aqua: #d6eef2;
+  --color-aqua-deep: #a9dde6;
+
+  /* Текст */
+  --color-ink: #17282f;
+  --color-ink-soft: #4e666f;
+
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-script: var(--font-script), cursive;
+  --font-body: var(--font-golos), -apple-system, 'Segoe UI', sans-serif;
+
+  --spacing-gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+:root {
+  color-scheme: light;
+  --nav-h: 5rem;
+
+  accent-color: var(--color-gold);
+  caret-color: var(--color-teal);
+  scrollbar-color: #d9cdb9 var(--color-cream);
+  scrollbar-width: thin;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: var(--nav-h);
+  background: var(--color-cream);
+}
+
+body {
+  margin: 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--color-gold);
+  color: #2c1e05;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--spacing-gutter);
+  top: -100%;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--color-teal);
+  color: var(--color-cream);
+  font-weight: 600;
+  border-radius: 999px;
+  transition: top 0.2s var(--ease-out-soft);
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── Типографика ──────────────────────────────────────────────────────── */
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+}
+
+.script {
+  font-family: var(--font-script);
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+/* Надзаголовок над заголовком — приём из референса. */
+.eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  margin: 0 0 0.75rem;
+}
+
+.h-section {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.9rem, 4vw, 2.85rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.lede {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 64ch;
+  color: var(--color-ink-soft);
+  text-wrap: pretty;
+}
+
+.data {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Раскладка ────────────────────────────────────────────────────────── */
+
+.shell {
+  width: 100%;
+  max-width: 82rem;
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+.section {
+  padding-block: clamp(3.5rem, 7vw, 6rem);
+}
+
+/* ── Появление при прокрутке ──────────────────────────────────────────── */
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 0.7s var(--ease-out-soft),
+    transform 0.7s var(--ease-out-soft);
+}
+.reveal[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Кнопки ───────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 3.25rem;
+  padding: 0 1.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  line-height: 1;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.25s var(--ease-out-soft),
+    border-color 0.25s var(--ease-out-soft),
+    color 0.25s var(--ease-out-soft),
+    box-shadow 0.3s var(--ease-out-soft);
+}
+
+.btn-gold {
+  background: var(--color-gold);
+  color: #2c1e05;
+  box-shadow: 0 12px 26px -16px rgb(23 40 47 / 0.85);
+}
+.btn-gold:hover {
+  background: #f7c04b;
+  box-shadow: 0 16px 30px -16px rgb(23 40 47 / 0.9);
+}
+
+.btn-teal {
+  background: var(--color-teal);
+  color: var(--color-cream);
+}
+.btn-teal:hover {
+  background: var(--color-teal-mid);
+}
+
+.btn-white {
+  background: var(--color-shell);
+  color: var(--color-ink);
+  box-shadow: 0 8px 20px -14px rgb(23 40 47 / 0.6);
+}
+.btn-white:hover {
+  background: #f7f2ea;
+}
+
+.btn-line {
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+  color: inherit;
+}
+.btn-line:hover {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+/* Круглая кнопка со стрелкой — повторяющийся элемент референса. */
+.btn-round {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+  flex: none;
+  transition:
+    background-color 0.25s var(--ease-out-soft),
+    border-color 0.25s var(--ease-out-soft),
+    color 0.25s var(--ease-out-soft);
+}
+.btn-round:hover {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: #2c1e05;
+}
+
+.btn .ico,
+.btn-round .ico {
+  transition: transform 0.28s var(--ease-out-soft);
+}
+.btn:hover .ico,
+.btn-round:hover .ico {
+  transform: translateX(2px);
+}
+
+/* ── Фотографии ───────────────────────────────────────────────────────────
+   Снимки в демо приходят из внешнего плейсхолдера и между собой не связаны
+   ни светом, ни цветом. Тонкий тёплый слой сводит их к одной гамме, иначе
+   каталог выглядит случайной подборкой. С настоящими фотографиями острова
+   слой снимается одной строкой.
+   ───────────────────────────────────────────────────────────────────── */
+
+.photo {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-sand);
+}
+.photo img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  filter: saturate(0.94) contrast(1.04);
+}
+.photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--color-teal-soft) 30%, transparent),
+    transparent 48%,
+    color-mix(in srgb, var(--color-gold) 22%, transparent)
+  );
+  mix-blend-mode: soft-light;
+}
+
+/* Цена — единственное золотое пятно в карточке: глаз идёт к ней сразу. */
+.price {
+  font-weight: 700;
+  color: var(--color-gold-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Круглая кнопка-сердце поверх фотографии. */
+.fav {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-shell) 92%, transparent);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px -8px rgb(23 40 47 / 0.5);
+  transition: color 0.25s var(--ease-out-soft), background-color 0.25s var(--ease-out-soft);
+}
+.fav:hover {
+  color: var(--color-ember);
+  background: var(--color-shell);
+}
+
+/* ── Карточки ─────────────────────────────────────────────────────────── */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-shell);
+  color: var(--color-ink);
+  border-radius: 14px;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 2px 4px -2px rgb(23 40 47 / 0.08);
+  transition:
+    transform 0.4s var(--ease-out-soft),
+    box-shadow 0.4s var(--ease-out-soft);
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 44px -28px rgb(23 40 47 / 0.55);
+}
+.card .photo img {
+  transition: transform 0.75s var(--ease-out-soft);
+}
+.card:hover .photo img {
+  transform: scale(1.05);
+}
+
+/* Плашка поверх фотографии: рейтинг, район, метка доставки. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-shell) 92%, transparent);
+  color: var(--color-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px -8px rgb(23 40 47 / 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}

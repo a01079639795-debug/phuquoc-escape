@@ -1,0 +1,635 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  Платформа «Фукуок» — схема данных MVP
+//
+//  Принципы (см. ARCHITECTURE.md, раздел 2):
+//   1. Listing — общая сущность каталога. Отель и байк отличаются только
+//      таблицей-расширением. Услуги и пользовательские объявления добавляются
+//      новым значением ListingType + новой таблицей деталей.
+//   2. ListingUnit — единица инвентаря (тип номера / модель байка). В MVP несёт
+//      цену, на этапе 2 становится объектом бронирования (quantity = ёмкость).
+//   3. Request (лид) и Booking (контракт) — разные сущности. Booking появится
+//      на этапе 2 и будет ссылаться на Request, а не заменять его.
+//
+//  Соглашения:
+//   • Деньги — целое число в минорных единицах (BigInt) + Currency. Для VND
+//     минорная единица равна единице. float/double не используются нигде.
+//   • Даты проживания и аренды — @db.Date (календарный день, не момент времени).
+//     Предметная таймзона: Asia/Ho_Chi_Minh. Все timestamp — timestamptz (UTC).
+//   • Мультиязычность: переводимый текст вынесен в *Translation-таблицы с
+//     @@unique([<parent>Id, locale]). В MVP заполняется только RU; EN и VI
+//     добавляются данными, без изменения схемы и бизнес-логики.
+//   • Подписи статусов и enum'ов не хранятся в БД — они живут в словарях
+//     интерфейса (next-intl). В БД только машинные коды.
+//   • Удаление объектов — мягкое (status = ARCHIVED). Пользователи — BLOCKED.
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+  /// Второй бинарник — под Linux, на котором выполняются serverless-функции
+  /// (Netlify, Vercel, Lambda). Без него сборка проходит, а запрос в базу на
+  /// хостинге падает: движок собран под систему разработчика.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  ENUMS
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Языки платформы. В MVP контент заполняется только на RU.
+enum Locale {
+  RU
+  EN
+  VI
+}
+
+enum UserRole {
+  USER
+  PARTNER // зарезервирована: этап 6 (пользовательские объявления)
+  MANAGER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum UserTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+/// Тип объекта каталога. Расширяется значениями SERVICE / AD на этапе 6.
+enum ListingType {
+  HOTEL
+  BIKE
+}
+
+/// PENDING нужен уже сейчас: на этапе 6 это состояние объекта партнёра,
+/// ожидающего модерации. В MVP используется только DRAFT → PUBLISHED → ARCHIVED.
+enum ListingStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  ARCHIVED
+}
+
+enum Currency {
+  VND
+  USD
+}
+
+/// Единица тарификации ListingUnit. Расширяется (HOUR, WEEK, MONTH, ITEM)
+/// без миграции данных.
+enum PriceUnit {
+  NIGHT
+  DAY
+}
+
+enum AmenityScope {
+  HOTEL
+  BIKE
+  ANY
+}
+
+enum Transmission {
+  AUTOMATIC
+  SEMI_AUTOMATIC
+  MANUAL
+}
+
+enum RequestType {
+  HOTEL
+  BIKE
+  GENERAL
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum MessengerType {
+  NONE
+  TELEGRAM
+  WHATSAPP
+  ZALO
+  VIBER
+}
+
+/// Источник заявки. Расширяется (TELEGRAM_BOT, PARTNER_API) на будущих этапах.
+enum RequestSource {
+  WEB_LISTING
+  WEB_GENERAL
+  ADMIN
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  ПОЛЬЗОВАТЕЛИ И ДОСТУП
+// ═════════════════════════════════════════════════════════════════════════════
+
+model User {
+  id              String     @id @default(uuid(7)) @db.Uuid
+  /// Хранится всегда в нижнем регистре — нормализация в service layer.
+  email           String     @unique
+  /// argon2id. Никогда не покидает service layer.
+  passwordHash    String
+  name            String
+  phone           String?
+  /// E.164 без разделителей. Основа будущей дедупликации клиентов в CRM.
+  phoneNormalized String?
+  locale          Locale     @default(RU)
+  role            UserRole   @default(USER)
+  status          UserStatus @default(ACTIVE)
+
+  emailVerifiedAt DateTime? @db.Timestamptz(3)
+  lastLoginAt     DateTime? @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+
+  sessions         Session[]
+  tokens           UserToken[]
+  ownedListings    Listing[]     @relation("ListingOwner")
+  requests         Request[]     @relation("RequestAuthor")
+  assignedRequests Request[]     @relation("RequestAssignee")
+  requestNotes     RequestNote[]
+  favorites        Favorite[]
+  uploadedMedia    MediaAsset[]
+  auditLogs        AuditLog[]
+
+  @@index([role, status])
+  @@index([phoneNormalized])
+  @@index([createdAt])
+}
+
+/// Опаковая серверная сессия. В cookie уходит сам токен, в БД — только его хэш,
+/// поэтому дамп базы не даёт возможности войти под пользователем.
+model Session {
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @db.Uuid
+  tokenHash  String    @unique
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime  @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
+  lastUsedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+/// Одноразовые токены: подтверждение email и сброс пароля.
+/// Одна таблица вместо двух — типы отличаются только значением `type`.
+model UserToken {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  type      UserTokenType
+  tokenHash String        @unique
+  expiresAt DateTime      @db.Timestamptz(3)
+  usedAt    DateTime?     @db.Timestamptz(3)
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  СПРАВОЧНИКИ
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Район Фукуока. Даёт фильтр каталога и SEO-страницы вида /hotels/ong-lang.
+model Area {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  slug      String   @unique
+  lat       Decimal? @db.Decimal(10, 7)
+  lng       Decimal? @db.Decimal(10, 7)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  translations AreaTranslation[]
+  listings     Listing[]
+
+  @@index([isActive, sortOrder])
+}
+
+model AreaTranslation {
+  id          String  @id @default(uuid(7)) @db.Uuid
+  areaId      String  @db.Uuid
+  locale      Locale
+  name        String
+  description String?
+
+  area Area @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([areaId, locale])
+  @@index([locale])
+}
+
+/// Удобство отеля или опция байка. `group` — код группы для админки
+/// («internet», «food», «equipment»); его подписи живут в словарях интерфейса.
+model Amenity {
+  id        String       @id @default(uuid(7)) @db.Uuid
+  code      String       @unique
+  scope     AmenityScope @default(ANY)
+  group     String?
+  icon      String?
+  sortOrder Int          @default(0)
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime     @updatedAt @db.Timestamptz(3)
+
+  translations AmenityTranslation[]
+  listings     ListingAmenity[]
+
+  @@index([scope, isActive, sortOrder])
+}
+
+model AmenityTranslation {
+  id        String @id @default(uuid(7)) @db.Uuid
+  amenityId String @db.Uuid
+  locale    Locale
+  name      String
+
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@unique([amenityId, locale])
+  @@index([locale])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  КАТАЛОГ
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Общая сущность каталога: отель, байк, в будущем услуга или объявление.
+/// Всё, что одинаково для любого типа (модерация, фото, локация, заявки,
+/// будущие брони и отзывы), связано именно с этой таблицей.
+model Listing {
+  id     String        @id @default(uuid(7)) @db.Uuid
+  type   ListingType
+  slug   String        @unique
+  status ListingStatus @default(DRAFT)
+
+  /// null = объект принадлежит платформе. Поле — точка расширения под
+  /// партнёров и пользовательские объявления (этап 6), заполнять не требуется.
+  ownerId String? @db.Uuid
+  areaId  String? @db.Uuid
+
+  address String?
+  lat     Decimal? @db.Decimal(10, 7)
+  lng     Decimal? @db.Decimal(10, 7)
+
+  /// Денормализованная минимальная цена по активным ListingUnit.
+  /// Пересчитывается в service layer при любом изменении юнитов.
+  /// Нужна для сортировки и списков без JOIN и агрегации.
+  priceFromAmount BigInt?
+  currency        Currency @default(VND)
+
+  isFeatured Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  publishedAt DateTime? @db.Timestamptz(3)
+
+  translations ListingTranslation[]
+  hotelDetails HotelDetails?
+  bikeDetails  BikeDetails?
+  units        ListingUnit[]
+  amenities    ListingAmenity[]
+  images       ListingImage[]
+  requests     Request[]
+  favorites    Favorite[]
+
+  ownerUser User? @relation("ListingOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  area      Area? @relation(fields: [areaId], references: [id], onDelete: Restrict)
+
+  @@index([type, status, areaId])
+  @@index([status, priceFromAmount])
+  @@index([status, isFeatured, sortOrder])
+  @@index([ownerId])
+}
+
+/// Переводимые тексты объекта. В MVP существует одна строка на объект (RU).
+/// slug намеренно остаётся на Listing: URL канонический для всех языков
+/// (/ru/hotels/<slug>, /en/hotels/<slug>).
+model ListingTranslation {
+  id               String  @id @default(uuid(7)) @db.Uuid
+  listingId        String  @db.Uuid
+  locale           Locale
+  title            String
+  shortDescription String?
+  description      String?
+  /// SEO-переопределения; при отсутствии генерируются из title/shortDescription.
+  metaTitle        String?
+  metaDescription  String?
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, locale])
+  @@index([locale, title])
+}
+
+/// Структурированные факты об отеле. Всё, что является «галочкой»
+/// (wi-fi, бассейн, завтрак), живёт в Amenity, а не здесь — чтобы не
+/// дублировать фильтры каталога в двух местах.
+model HotelDetails {
+  listingId         String  @id @db.Uuid
+  stars             Int?
+  /// Локальное время в формате HH:mm, таймзона предметной области.
+  checkInTime       String?
+  checkOutTime      String?
+  distanceToBeachM  Int?
+  distanceToCenterM Int?
+  totalRooms        Int?
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model BikeDetails {
+  listingId         String       @id @db.Uuid
+  brand             String
+  model             String
+  engineCc          Int?
+  transmission      Transmission @default(AUTOMATIC)
+  year              Int?
+  /// Залог. Отдельная валюта: залог часто берут в USD при аренде за VND.
+  depositAmount     BigInt?
+  depositCurrency   Currency?
+  helmetsIncluded   Int          @default(2)
+  deliveryIncluded  Boolean      @default(false)
+  deliveryFeeAmount BigInt?
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([brand, model])
+}
+
+/// Единица инвентаря: тип номера у отеля, модель байка у проката.
+/// `quantity` — сколько таких единиц существует. В MVP это поле только
+/// отображается; на этапе 2 оно становится ёмкостью для проверки
+/// «bookedCount + qty <= quantity» при защите от двойного бронирования.
+model ListingUnit {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  listingId String  @db.Uuid
+  /// Внутренний код для админки и будущего импорта прайсов («deluxe-sea-view»).
+  code      String?
+
+  capacity Int?
+  quantity Int  @default(1)
+
+  priceAmount BigInt
+  currency    Currency  @default(VND)
+  priceUnit   PriceUnit
+  /// Минимальный срок аренды/проживания в единицах priceUnit.
+  minDuration Int       @default(1)
+
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  listing      Listing                  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  translations ListingUnitTranslation[]
+  requests     Request[]
+
+  @@unique([listingId, code])
+  @@index([listingId, isActive, sortOrder])
+}
+
+model ListingUnitTranslation {
+  id          String  @id @default(uuid(7)) @db.Uuid
+  unitId      String  @db.Uuid
+  locale      Locale
+  name        String
+  description String?
+
+  unit ListingUnit @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, locale])
+  @@index([locale])
+}
+
+/// Связь объекта и удобства. Составной первичный ключ — вставка дубликата
+/// невозможна на уровне БД.
+model ListingAmenity {
+  listingId String @db.Uuid
+  amenityId String @db.Uuid
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, amenityId])
+  @@index([amenityId])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  МЕДИА
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Загруженный файл в объектном хранилище (R2 / MinIO).
+/// storageKey генерирует сервер; width/height известны на момент подтверждения
+/// загрузки, поэтому карточки рендерятся без layout shift.
+model MediaAsset {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  storageKey   String   @unique
+  url          String
+  mime         String
+  width        Int
+  height       Int
+  sizeBytes    Int
+  /// Крошечный base64-плейсхолдер для плавной загрузки.
+  blurDataUrl  String?
+  uploadedById String?  @db.Uuid
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  uploadedBy    User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  listingImages ListingImage[]
+
+  @@index([createdAt])
+  @@index([uploadedById])
+}
+
+/// Привязка изображения к объекту. Один MediaAsset может использоваться
+/// несколькими объектами, поэтому удаление привязки не удаляет файл.
+/// Единственность обложки (isCover) обеспечивается транзакцией в service layer.
+model ListingImage {
+  id        String  @id @default(uuid(7)) @db.Uuid
+  listingId String  @db.Uuid
+  mediaId   String  @db.Uuid
+  /// Alt-текст. Единственный переводимый текст, оставленный вне
+  /// translation-таблицы: в MVP заполняется на языке контента.
+  alt       String?
+  sortOrder Int     @default(0)
+  isCover   Boolean @default(false)
+
+  listing Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  media   MediaAsset @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@unique([listingId, mediaId])
+  @@index([listingId, sortOrder])
+  @@index([mediaId])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  ЗАЯВКИ
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Заявка (лид). Ничего не блокирует и не резервирует.
+/// На этапе 2 здесь появится bookingId — заявка конвертируется в бронь,
+/// но остаётся как источник лида для CRM.
+///
+/// Все ссылки на объект и пользователя — onDelete: SetNull: заявка не должна
+/// исчезать вместе с архивированным объектом или удалённым аккаунтом.
+model Request {
+  id         String        @id @default(uuid(7)) @db.Uuid
+  /// Человекочитаемый код для клиента и поддержки: PQ-4F7K2.
+  publicCode String        @unique
+  type       RequestType
+  status     RequestStatus @default(NEW)
+
+  listingId     String? @db.Uuid
+  listingUnitId String? @db.Uuid
+  /// null = заявка от гостя. При входе привязывается по совпадению
+  /// phoneNormalized или email.
+  userId        String? @db.Uuid
+
+  contactName            String
+  contactPhone           String
+  /// E.164 — ключ будущей дедупликации в сущность Client (этап 4).
+  contactPhoneNormalized String?
+  contactEmail           String?
+  messenger              MessengerType @default(NONE)
+  messengerHandle        String?
+
+  /// Даты присутствуют уже в MVP — именно они конвертируются в бронь на этапе 2.
+  dateFrom DateTime? @db.Date
+  dateTo   DateTime? @db.Date
+  guests   Int?
+  quantity Int?
+  comment  String?
+
+  /// Язык обращения клиента — менеджеру нужно знать, на каком языке отвечать.
+  locale Locale        @default(RU)
+  source RequestSource @default(WEB_LISTING)
+  /// Маркетинговая атрибуция (utm_source, utm_campaign, referrer).
+  /// Json, потому что состав меток меняется без миграций.
+  utm    Json?
+
+  assignedToId String? @db.Uuid
+
+  /// Технический контекст для разбора спама и злоупотреблений.
+  ip        String?
+  userAgent String?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  listing     Listing?      @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  listingUnit ListingUnit?  @relation(fields: [listingUnitId], references: [id], onDelete: SetNull)
+  user        User?         @relation("RequestAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  assignedTo  User?         @relation("RequestAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  notes       RequestNote[]
+
+  @@index([status, createdAt])
+  @@index([assignedToId, status])
+  @@index([contactPhoneNormalized])
+  @@index([userId, createdAt])
+  @@index([listingId, createdAt])
+  @@index([createdAt])
+}
+
+/// Внутренний комментарий менеджера. Клиенту не показывается.
+/// Прототип ленты активности в будущей CRM.
+model RequestNote {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  requestId String   @db.Uuid
+  authorId  String   @db.Uuid
+  body      String
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  request Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User    @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
+  @@index([authorId])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  КАБИНЕТ
+// ═════════════════════════════════════════════════════════════════════════════
+
+model Favorite {
+  userId    String   @db.Uuid
+  listingId String   @db.Uuid
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, listingId])
+  @@index([userId, createdAt])
+  @@index([listingId])
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+//  СЛУЖЕБНОЕ
+// ═════════════════════════════════════════════════════════════════════════════
+
+/// Универсальный журнал изменений. entity/entityId — строки, а не связи:
+/// журнал должен переживать удаление объекта и не требовать миграции при
+/// появлении новых сущностей (Booking, Payment, Deal).
+model AuditLog {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  actorId   String?   @db.Uuid
+  actorRole UserRole?
+  entity    String
+  entityId  String
+  action    String
+  before    Json?
+  after     Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+/// Хранилище результатов идемпотентных POST-запросов.
+/// В MVP используется только для POST /requests (защита от двойной отправки
+/// формы). На этапе 2–3 тот же механизм закрывает создание броней и приём
+/// платёжных вебхуков — без новой таблицы.
+model IdempotencyKey {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  /// Пространство имён операции: "request.create", позже "booking.create".
+  scope        String
+  key          String
+  userId       String?  @db.Uuid
+  /// Хэш тела запроса: тот же ключ с другим телом — ошибка, а не повтор.
+  requestHash  String
+  statusCode   Int?
+  responseBody Json?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt    DateTime @db.Timestamptz(3)
+
+  @@unique([scope, key])
+  @@index([expiresAt])
+}

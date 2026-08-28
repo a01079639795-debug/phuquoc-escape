@@ -1,0 +1,34 @@
+# Выкладка демо на Netlify.
+#
+# Next Runtime (@netlify/plugin-nextjs) сам заворачивает страницы и маршруты
+# API в функции; отдельной настройки маршрутов не нужно. Здесь только то, чего
+# он знать не может.
+#
+# Что нужно задать в переменных окружения сайта (Site configuration →
+# Environment variables), иначе сборка пройдёт, а страницы упадут:
+#
+#   DATABASE_URL   — строка подключения к Postgres. Обязательно пул
+#                    (для Neon это адрес с -pooler): функций много, прямых
+#                    соединений база не выдержит.
+#   NODE_VERSION   — задан ниже, менять не нужно.
+#
+# Необязательное: TELEGRAM_BOT_TOKEN и TELEGRAM_MANAGER_CHAT_ID (без них
+# уведомления пишутся в лог), S3_* (без них не работает только загрузка файлов).
+#
+# Миграции и демо-данные накатываются один раз руками, а не сборкой:
+#   npm run db:deploy   — миграции
+#   npm run db:seed     — демо-данные, СНОСИТ содержимое базы
+# Поэтому в build их нет: иначе каждый деплой стирал бы то, что показали.
+
+[build]
+  command = "npm run db:generate && npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Движки Prisma задаются в prisma/schema.prisma (binaryTargets). Дублировать
+  # их переменной PRISMA_CLI_BINARY_TARGETS нельзя: она перекрывает схему, и
+  # сборка падает на «Unknown binaryTarget native».
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

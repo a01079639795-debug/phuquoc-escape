@@ -1,0 +1,17 @@
+// Сгенерировано scripts/generate-routes.mjs — правки вносить там.
+//
+// Route handler'ы тонкие по договорённости: разобрать вход, вызвать сервис,
+// вернуть результат. Разбор сессии, проверка CSRF, конверт ответа и перевод
+// доменных ошибок в коды состояния живут в @/server/http/handler.
+
+import { handle } from '@/server/http/handler';
+import { endSession } from '@/server/http/session';
+import { SESSION_COOKIE, readCookie } from '@/server/http/cookies';
+import { auth } from '@/server';
+
+export const POST = handle(async (ctx) => {
+  const token = readCookie(ctx.req.headers.get('cookie'), SESSION_COOKIE);
+  if (token) await auth.logout(token);
+  endSession(ctx);
+  return { loggedOut: true };
+});

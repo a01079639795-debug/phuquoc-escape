@@ -1,0 +1,446 @@
+/* ═════════════════════════════════════════════════════════════════════════
+   Первый экран.
+
+   Прокрутка пишет одну переменную --p (0…1) на корне секции, курсор — --mx
+   и --my. Всё остальное делает CSS: за кадр происходит одна запись стиля и
+   ни одного чтения раскладки после неё, поэтому нет ни дёрганья, ни
+   принудительных пересчётов.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.hero {
+  --p: 0;
+  --mx: 0;
+  --my: 0;
+  position: relative;
+  min-height: min(82svh, 46rem);
+  overflow: clip;
+  isolation: isolate;
+  background: #2b93a8;
+  /* Место под панель поиска, которая наезжает на нижний край. */
+  padding-bottom: clamp(3.5rem, 7vw, 5rem);
+}
+
+/* Фотография вместо сцены: тот же кадр, те же слои поверх. */
+.photoLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.photoImg {
+  object-fit: cover;
+  /* Кадр смещён вправо и вниз: слева пальмы и солнце, там пойдёт текст,
+     а справа остаются канатка и остров — их терять нельзя. */
+  object-position: 62% 62%;
+  transform: scale(calc(1.06 + var(--p) * 0.06)) translate3d(calc(var(--mx) * -14px), calc(var(--p) * 22px), 0);
+  will-change: transform;
+}
+/*
+ * Затемнение под текстом.
+ *
+ * Не полоса слева, а мягкое пятно, посаженное туда, где идёт заголовок:
+ * прямая граница читается как наложенная плашка, круглая — как обычное
+ * падение света в кадре. Пальмы и закат при этом остаются светлее, чем были
+ * под линейным градиентом.
+ *
+ * Сверху — под шапку, снизу — под панель поиска.
+ */
+.photoScrim {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 64% 100% at 28% 44%,
+      rgb(10 32 38 / 0.74) 0%,
+      rgb(10 32 38 / 0.60) 50%,
+      rgb(10 32 38 / 0.20) 82%,
+      rgb(10 32 38 / 0) 100%
+    ),
+    linear-gradient(to bottom, rgb(9 40 54 / 0.38) 0%, rgb(9 40 54 / 0) 26%, rgb(9 40 54 / 0) 62%, rgb(9 40 54 / 0.5) 100%);
+}
+
+/*
+ * Зерно поверх всего первого экрана — и фотографии, и текста.
+ *
+ * Ровно то, чего не хватает наложенной подписи: у снимка есть шум матрицы, у
+ * букв его нет, и глаз ловит границу двух разных поверхностей. Общее зерно
+ * убирает эту границу. Тайл рисуется один раз и не анимируется.
+ */
+.grain {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='150' height='150' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+}
+
+/* Тёмный диск со стрелкой внутри золотой кнопки — деталь референса. */
+.btnDisc {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  background: #17282f;
+  color: var(--color-gold);
+  flex: none;
+}
+
+.frame {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  width: 100%;
+  transform: scale(calc(1 + var(--p) * 0.07));
+  transform-origin: 50% 60%;
+  will-change: transform;
+}
+
+/* ── Слои: чем ближе, тем сильнее сдвиг ───────────────────────────────── */
+
+.sky {
+  transform: translate3d(calc(var(--mx) * -10px), calc(var(--p) * 26px), 0);
+}
+.sun {
+  transform: translate3d(calc(var(--mx) * -16px), calc(var(--p) * 40px), 0);
+}
+.islands {
+  transform: translate3d(calc(var(--mx) * -22px), calc(var(--p) * -10px), 0);
+}
+.island {
+  transform: translate3d(calc(var(--mx) * -30px), calc(var(--p) * -18px), 0);
+}
+.cable {
+  transform: translate3d(calc(var(--mx) * -38px), calc(var(--p) * -24px), 0);
+}
+.sea {
+  transform: translate3d(calc(var(--mx) * -12px), calc(var(--p) * -34px), 0);
+}
+.shore {
+  transform: translate3d(calc(var(--mx) * -8px), calc(var(--p) * -52px), 0);
+}
+.fronds {
+  transform: translate3d(calc(var(--mx) * 26px), calc(var(--p) * -96px + var(--my) * 10px), 0);
+}
+
+/* ── Непрерывное движение ─────────────────────────────────────────────── */
+
+.glimmer {
+  animation: drift 21s ease-in-out infinite alternate;
+}
+.glimmerSlow {
+  animation: drift 31s ease-in-out infinite alternate-reverse;
+}
+@keyframes drift {
+  from {
+    transform: translateX(-16px);
+  }
+  to {
+    transform: translateX(16px);
+  }
+}
+
+.halo {
+  transform-origin: center;
+  animation: breathe 12s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.62;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.88;
+    transform: scale(1.05);
+  }
+}
+
+/* Кабины едут по тросу к острову и возвращаются в начало. */
+.cabins {
+  animation: ride 34s linear infinite;
+}
+@keyframes ride {
+  from {
+    transform: translate3d(-120px, 14px, 0);
+  }
+  to {
+    transform: translate3d(240px, -26px, 0);
+  }
+}
+
+.frondLeft,
+.frondRight {
+  transform-box: fill-box;
+  transform-origin: top center;
+}
+.frondLeft {
+  animation: sway 14s ease-in-out infinite;
+}
+.frondRight {
+  animation: sway 17s ease-in-out infinite reverse;
+}
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-1.2deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+/* ── Текст ────────────────────────────────────────────────────────────── */
+
+.copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: inherit;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: calc(var(--nav-h) + clamp(1.5rem, 5vh, 3.5rem));
+  padding-bottom: clamp(6rem, 14vh, 10rem);
+  color: var(--color-shell);
+  /* Текст уходит быстрее сцены: сначала освобождается кадр. */
+  opacity: clamp(0, calc(1 - var(--p) * 1.5), 1);
+  transform: translate3d(0, calc(var(--p) * -60px), 0);
+}
+
+.eyebrow {
+  margin: 0 0 clamp(0.75rem, 2vh, 1.25rem);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-shell) 88%, transparent);
+}
+
+/*
+ * Заголовок.
+ *
+ * Округлый гротеск вместо антиквы: на фотографии крупная антиква ведёт себя
+ * как наклейка — тонкие засечки на неровном фоне рвутся, и надпись отделяется
+ * от кадра. Плотные округлые овалы держат снимок.
+ *
+ * Цвет взят из самой сцены: тёплый кремовый — небо у солнца, бирюза — вода.
+ * Внутри каждого слова цвет ещё и переходит слева направо, повторяя ход света
+ * в кадре: слева теплее (солнце), справа холоднее. Заливка идёт градиентом,
+ * подрезанным по буквам, поэтому тень к нему — drop-shadow: обычная
+ * text-shadow проступила бы сквозь прозрачную заливку внутри букв.
+ *
+ * Тень мягкая и уходит вправо-вниз — туда же, куда падают тени пальм: солнце
+ * на снимке слева.
+ */
+.title {
+  margin: 0;
+  font-family: var(--font-hero), var(--font-body);
+  font-weight: 800;
+  font-size: clamp(3.1rem, 11.5vw, 9rem);
+  line-height: 0.92;
+  letter-spacing: -0.022em;
+  text-transform: uppercase;
+  filter: drop-shadow(0.022em 0.05em 0.115em rgb(9 38 50 / 0.45));
+}
+.titleLine {
+  display: block;
+  overflow: hidden;
+}
+/* Ширина по тексту, а не по строке: иначе градиент растянулся бы на всю
+   ширину блока и до правого края слова доходил бы только его началом. */
+.titleLine > span {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+}
+.title span[data-tone] {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+/* Верхняя строка и «Phú» — свет; «Quốc» — вода. Двухцветное имя из референса
+   осталось, но обе половины теперь одной яркости и обе читаются. */
+.title span[data-tone='light'] {
+  background-image: linear-gradient(97deg, #fdf4e4 0%, #f7eeda 46%, #eee0c9 100%);
+}
+.title span[data-tone='water'] {
+  background-image: linear-gradient(97deg, #cfeaf0 0%, #b3dbe6 52%, #93cddf 100%);
+}
+
+/* Режим высокой контрастности: подрезанная заливка там не работает. */
+@media (forced-colors: active) {
+  .title span[data-tone] {
+    background-image: none;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+}
+
+.script {
+  margin: clamp(0.5rem, 1.6vh, 1rem) 0 clamp(1.5rem, 4vh, 2.5rem);
+  font-family: var(--font-script);
+  font-size: clamp(1.6rem, 4.4vw, 3rem);
+  line-height: 1.1;
+  color: color-mix(in srgb, var(--color-shell) 94%, transparent);
+  text-shadow: 0 6px 24px rgb(11 48 64 / 0.4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+/* ── Появление при загрузке ───────────────────────────────────────────── */
+
+.rise > span {
+  animation: rise 1s var(--ease-out-soft) both;
+}
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.fade {
+  animation: fadeUp 0.9s var(--ease-out-soft) both;
+}
+@keyframes fadeUp {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.d1 { animation-delay: 0.1s; }
+.d2 { animation-delay: 0.22s; }
+.d3 { animation-delay: 0.36s; }
+.d4 { animation-delay: 0.52s; }
+.d5 { animation-delay: 0.66s; }
+
+/* ── Индикатор справа ─────────────────────────────────────────────────── */
+
+.rail {
+  position: absolute;
+  right: clamp(0.75rem, 2vw, 1.75rem);
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  opacity: calc(1 - var(--p) * 2);
+}
+@media (min-width: 1100px) {
+  .rail {
+    display: flex;
+  }
+}
+.railDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-shell) 55%, transparent);
+}
+.railDot[data-on='true'] {
+  background: var(--color-gold);
+  height: 18px;
+}
+.railText {
+  margin-top: 1rem;
+  writing-mode: vertical-rl;
+  font-size: 0.625rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-shell) 70%, transparent);
+}
+
+/* ── Мобильные и «меньше движения» ────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  /*
+   * На узком экране виден средний кусок кадра — самое светлое место снимка,
+   * и текст лежит поперёк всей ширины. Боковое пятно тут не работает:
+   * затемнение идёт сверху вниз, по строкам заголовка, и отпускает кадр к
+   * нижней трети, где остаются море и полоса прибоя.
+   */
+  .photoScrim {
+    background:
+      linear-gradient(
+        to bottom,
+        rgb(10 32 38 / 0.62) 0%,
+        rgb(10 32 38 / 0.58) 55%,
+        rgb(10 32 38 / 0.18) 78%,
+        rgb(10 32 38 / 0.06) 100%
+      ),
+      linear-gradient(to bottom, rgb(9 40 54 / 0.38) 0%, rgb(9 40 54 / 0) 26%, rgb(9 40 54 / 0) 62%, rgb(9 40 54 / 0.5) 100%);
+  }
+  /* Бирюза на светлом небе поднимается на тон: иначе «Quốc» тонет. */
+  .title span[data-tone='water'] {
+    background-image: linear-gradient(97deg, #dcf1f5 0%, #c3e5ee 60%, #aedbe8 100%);
+  }
+
+  .scene {
+    transform: none;
+  }
+  .sky,
+  .sun,
+  .islands,
+  .island,
+  .cable,
+  .sea,
+  .shore {
+    transform: none;
+  }
+  .fronds {
+    transform: translate3d(0, calc(var(--p) * -40px), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene,
+  .sky,
+  .sun,
+  .islands,
+  .island,
+  .cable,
+  .sea,
+  .shore,
+  .fronds {
+    transform: none !important;
+  }
+  .glimmer,
+  .glimmerSlow,
+  .halo,
+  .cabins,
+  .frondLeft,
+  .frondRight {
+    animation: none !important;
+  }
+  .rise > span,
+  .fade {
+    animation: none !important;
+  }
+  .copy {
+    opacity: 1;
+  }
+}

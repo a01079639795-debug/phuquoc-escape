@@ -1,0 +1,13 @@
+node_modules/
+.next/
+.devdb/
+.env
+.env.local
+*.log
+*.tsbuildinfo
+.DS_Store
+coverage/
+dist/
+
+# Local Netlify folder
+.netlify

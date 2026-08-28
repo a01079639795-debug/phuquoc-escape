@@ -1,0 +1,526 @@
+<title>Внешний контур Фукуока</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Golos+Text:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground:      #F6F8F7;
+    --surface:     #FFFFFF;
+    --surface-alt: #EEF2F1;
+    --ink:         #131A19;
+    --ink-muted:   #566361;
+    --ink-faint:   #7C8886;
+    --rule:        #DCE3E1;
+    --rule-strong: #C3CECB;
+
+    --accent:      #0F6E62;
+    --accent-deep: #0A4E45;
+    --accent-wash: #E4F0ED;
+
+    --flag:        #A9691A;
+    --flag-wash:   #FAEFDF;
+    --flag-rule:   #E5C48F;
+
+    --shadow: 0 1px 2px rgba(19, 26, 25, .05), 0 8px 24px -12px rgba(19, 26, 25, .12);
+
+    --font-display: 'Unbounded', 'Golos Text', system-ui, sans-serif;
+    --font-body: 'Golos Text', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Code', Consolas, monospace;
+
+    --measure: 68ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0D1312;
+      --surface:     #151D1B;
+      --surface-alt: #1B2523;
+      --ink:         #E3EAE8;
+      --ink-muted:   #93A19E;
+      --ink-faint:   #74827F;
+      --rule:        #253130;
+      --rule-strong: #35443F;
+      --accent:      #57C4B2;
+      --accent-deep: #8FDCCD;
+      --accent-wash: #12302B;
+      --flag:        #E0A959;
+      --flag-wash:   #2C2113;
+      --flag-rule:   #5C4622;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0D1312;
+    --surface:     #151D1B;
+    --surface-alt: #1B2523;
+    --ink:         #E3EAE8;
+    --ink-muted:   #93A19E;
+    --ink-faint:   #74827F;
+    --rule:        #253130;
+    --rule-strong: #35443F;
+    --accent:      #57C4B2;
+    --accent-deep: #8FDCCD;
+    --accent-wash: #12302B;
+    --flag:        #E0A959;
+    --flag-wash:   #2C2113;
+    --flag-rule:   #5C4622;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px -12px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent); text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent); text-underline-offset: .18em; }
+  a:hover { text-decoration-color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  code, .mono { font-family: var(--font-mono); font-size: .875em; }
+  p code, li code, td code {
+    font-family: var(--font-mono);
+    font-size: .855em;
+    background: var(--surface-alt);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .08em .34em;
+    white-space: nowrap;
+  }
+
+  .shell { display: grid; grid-template-columns: 1fr; max-width: 1180px; margin: 0 auto; padding: 0 22px 96px; }
+  @media (min-width: 1060px) {
+    .shell { grid-template-columns: 218px minmax(0, 1fr); gap: 56px; padding: 0 32px 120px; }
+  }
+  .col { min-width: 0; max-width: 830px; }
+
+  .masthead { border-bottom: 1px solid var(--rule); background: var(--surface); }
+  .masthead-in { max-width: 1180px; margin: 0 auto; padding: 54px 22px 40px; }
+  @media (min-width: 1060px) { .masthead-in { padding: 66px 32px 44px; } }
+
+  .eyebrow {
+    font-size: 11.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .eyebrow::before { content: ""; width: 26px; height: 2px; background: var(--accent); flex: none; }
+
+  h1 {
+    font-family: var(--font-display); font-weight: 600;
+    font-size: clamp(30px, 5.2vw, 47px); line-height: 1.08; letter-spacing: -.015em;
+    margin: 0 0 20px; text-wrap: balance; max-width: 17ch;
+  }
+  .dek { font-size: clamp(16.5px, 2.1vw, 19px); line-height: 1.55; color: var(--ink-muted); max-width: 58ch; margin: 0 0 34px; }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 10px 34px; padding-top: 26px; border-top: 1px solid var(--rule); font-size: 13.5px; }
+  .fact { display: flex; gap: 9px; align-items: baseline; }
+  .fact dt { color: var(--ink-faint); margin: 0; }
+  .fact dd { margin: 0; font-weight: 600; }
+
+  .metrics {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px;
+    background: var(--rule); border: 1px solid var(--rule); border-radius: 6px;
+    overflow: hidden; margin: 44px 0 8px;
+  }
+  @media (min-width: 640px) { .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .metric { background: var(--surface); padding: 20px 18px; }
+  .metric-n {
+    font-family: var(--font-display); font-weight: 500; font-size: 27px; line-height: 1;
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums; display: block; margin-bottom: 8px;
+  }
+  .metric-n.good { color: var(--accent); }
+  .metric-l { font-size: 12.5px; color: var(--ink-faint); line-height: 1.35; }
+
+  .toc { display: none; }
+  @media (min-width: 1060px) {
+    .toc {
+      display: block; position: sticky; top: 28px; align-self: start;
+      max-height: calc(100vh - 56px); overflow-y: auto; padding: 46px 0 0; font-size: 13px; line-height: 1.4;
+    }
+    .toc-h { font-size: 10.5px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 14px; }
+    .toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: toc; }
+    .toc li { counter-increment: toc; }
+    .toc a {
+      display: grid; grid-template-columns: 20px 1fr; gap: 6px; padding: 5px 8px 5px 10px;
+      color: var(--ink-muted); text-decoration: none; border-left: 2px solid transparent;
+      transition: color .12s, border-color .12s;
+    }
+    .toc a::before { content: counter(toc); font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+    .toc a:hover { color: var(--ink); border-left-color: var(--rule-strong); }
+    .toc a.flagged { color: var(--flag); font-weight: 600; }
+    .toc a.flagged::before { color: var(--flag); }
+    .toc a.flagged:hover { border-left-color: var(--flag); }
+  }
+
+  section { padding-top: 54px; scroll-margin-top: 22px; }
+  section:first-of-type { padding-top: 40px; }
+
+  h2 {
+    font-family: var(--font-body); font-weight: 700; font-size: clamp(21px, 3vw, 25px);
+    line-height: 1.22; letter-spacing: -.012em; margin: 0 0 20px; text-wrap: balance;
+    display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: baseline;
+  }
+  .sn { font-family: var(--font-display); font-weight: 500; font-size: .62em; color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+  h2:has(+ .lede) { margin-bottom: 10px; }
+  .lede { color: var(--ink-muted); margin: 0 0 22px; max-width: var(--measure); }
+
+  h3 { font-size: 15.5px; font-weight: 600; margin: 30px 0 10px; letter-spacing: -.005em; }
+
+  p, ul, ol { max-width: var(--measure); }
+  p { margin: 0 0 15px; }
+  ul, ol { margin: 0 0 15px; padding-left: 1.15em; }
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--ink-faint); }
+
+  .tw { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); margin: 0 0 18px; -webkit-overflow-scrolling: touch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 15px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-faint); background: var(--surface-alt); white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.nowrap { white-space: nowrap; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  pre.code {
+    margin: 0 0 18px; padding: 16px 18px; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 6px; overflow-x: auto;
+    font-family: var(--font-mono); font-size: 12.5px; line-height: 1.75; color: var(--ink-muted);
+  }
+  pre.code b { color: var(--ink); font-weight: 500; }
+  pre.code i { font-style: normal; color: var(--accent); }
+  pre.code u { text-decoration: none; color: var(--flag); }
+
+  .defects { display: flex; flex-direction: column; gap: 16px; }
+  .defect {
+    background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--flag);
+    border-radius: 5px; padding: 20px 22px 6px; box-shadow: var(--shadow);
+  }
+  .defect-h { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; margin-bottom: 12px; }
+  .defect-n { font-family: var(--font-mono); font-size: 12px; font-weight: 500; color: var(--flag); font-variant-numeric: tabular-nums; flex: none; }
+  .defect-t { font-weight: 600; font-size: 16.5px; letter-spacing: -.005em; }
+  .defect p { font-size: 15px; max-width: 64ch; }
+  .defect pre.code { background: var(--surface-alt); }
+  .fixed { font-size: 14px; color: var(--ink-muted); border-top: 1px dashed var(--rule-strong); padding-top: 12px; margin-top: 4px; }
+  .fixed b { color: var(--accent-deep); font-weight: 600; }
+  .tag {
+    display: inline-block; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent-deep); background: var(--accent-wash);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: 3px; padding: 3px 8px; flex: none;
+  }
+
+  .chip { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 500; letter-spacing: .04em; padding: 3px 7px; border-radius: 3px; white-space: nowrap; border: 1px solid transparent; }
+  .chip-yes { background: var(--flag-wash); color: var(--flag); border-color: var(--flag-rule); }
+  .chip-no  { background: var(--surface-alt); color: var(--ink-muted); border-color: var(--rule-strong); }
+
+  .note { background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); border-radius: 6px; padding: 16px 18px; margin-bottom: 18px; font-size: 15px; }
+  .note p:last-child { margin-bottom: 0; }
+  .note strong { color: var(--accent-deep); }
+
+  footer { border-top: 1px solid var(--rule); margin-top: 64px; padding-top: 26px; font-size: 13.5px; color: var(--ink-faint); max-width: var(--measure); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <p class="eyebrow">Ожидает ревью · 26.08.2026</p>
+    <h1>Внешний контур Фукуока</h1>
+    <p class="dek">Всё, что граничит с внешним миром: HTTP-транспорт поверх готовых сервисов, объектное хранилище с проверкой содержимого и уведомления менеджеру в Telegram. UI не создавался.</p>
+    <dl class="facts">
+      <div class="fact"><dt>Предыдущие этапы</dt><dd>Схема · Service layer</dd></div>
+      <div class="fact"><dt>Транспорт</dt><dd>Next.js 16, route handlers</dd></div>
+      <div class="fact"><dt>Хранилище</dt><dd>R2 · MinIO · память</dd></div>
+      <div class="fact"><dt>Канал</dt><dd>Telegram Bot API</dd></div>
+    </dl>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="toc" aria-label="Разделы">
+    <p class="toc-h">Разделы</p>
+    <ol>
+      <li><a href="#s1">Что сделано</a></li>
+      <li><a href="#s2" class="flagged">Найденные дефекты</a></li>
+      <li><a href="#s3">Тонкие обработчики</a></li>
+      <li><a href="#s4">Сессия и CSRF</a></li>
+      <li><a href="#s5">Коды состояния</a></li>
+      <li><a href="#s6">Хранилище</a></li>
+      <li><a href="#s7">Уведомления</a></li>
+      <li><a href="#s8">Проверки</a></li>
+      <li><a href="#s9">Ограничения</a></li>
+      <li><a href="#s10">Следующие шаги</a></li>
+    </ol>
+  </nav>
+
+  <main class="col">
+
+    <div class="metrics">
+      <div class="metric"><span class="metric-n">44</span><span class="metric-l">маршрута API</span></div>
+      <div class="metric"><span class="metric-n">60</span><span class="metric-l">новых теста</span></div>
+      <div class="metric"><span class="metric-n">2</span><span class="metric-l">найденных дефекта</span></div>
+      <div class="metric"><span class="metric-n good">160</span><span class="metric-l">проверок всего, все пройдены</span></div>
+    </div>
+
+    <!-- 1 -->
+    <section id="s1">
+      <h2><span class="sn">01</span><span>Что сделано</span></h2>
+      <p class="lede">Три пункта в заданном порядке: транспортный слой поверх готовых сервисов, адаптер хранилища с presigned-загрузкой и проверкой содержимого, уведомления в Telegram.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Слой</th><th class="num">Файлов</th><th class="num">Строк</th></tr></thead>
+          <tbody>
+            <tr><td><code>src/app/api/v1/**</code> — route handlers</td><td class="num">44</td><td class="num">589</td></tr>
+            <tr><td><code>src/server/http</code> — ядро транспорта</td><td class="num">4</td><td class="num">339</td></tr>
+            <tr><td><code>src/server/storage</code> — порт и адаптеры</td><td class="num">4</td><td class="num">283</td></tr>
+            <tr><td><code>src/server/notifications</code> — порт и каналы</td><td class="num">4</td><td class="num">278</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        <p><strong>Не создавалось по договорённости:</strong> UI, <code>Booking</code>, <code>Payment</code>, CRM, электронная почта.</p>
+        <p>Бизнес-логика из service layer не переносилась: транспорт только разбирает вход и вызывает сервис.</p>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="s2">
+      <h2><span class="sn">02</span><span>Два найденных дефекта</span></h2>
+      <p class="lede">Оба — мои собственные, оба исправлены и закрыты тестами.</p>
+
+      <div class="defects">
+
+        <article class="defect">
+          <div class="defect-h">
+            <span class="defect-n">2.1</span>
+            <span class="defect-t">Коды ошибок собирались из русских названий</span>
+            <span class="tag">исправлено</span>
+          </div>
+          <p><code>NotFoundError</code> строил код как <code>${entity.toUpperCase()}_NOT_FOUND</code>, где <code>entity</code> — человекочитаемое название. Наружу уходило <strong><code>ОБЪЕКТ_NOT_FOUND</code></strong>.</p>
+          <p>Код ошибки — машинный идентификатор: по нему клиент ветвит поведение, по нему группируются логи. Кириллица делает его непригодным, и вдобавок он менялся бы при первой правке формулировки.</p>
+<pre class="code">const ENTITIES = {
+  listing: { code: <b>'LISTING'</b>, message: 'Объект не найден' },
+  request: { code: <b>'REQUEST'</b>, message: 'Заявка не найдена' },
+  …
+} as const;</pre>
+          <p class="fixed"><b>Заменено типизированным справочником:</b> код и текст разделены, ключи проверяет компилятор. Дефект нашли тесты транспорта — на уровне сервисов он не был виден, потому что там ошибку ловят по классу, а не по коду.</p>
+        </article>
+
+        <article class="defect">
+          <div class="defect-h">
+            <span class="defect-n">2.2</span>
+            <span class="defect-t">Снятие EXIF ломало разбор размеров</span>
+            <span class="tag">исправлено</span>
+          </div>
+          <p>Первая реализация вырезала из JPEG <strong>все</strong> блоки <code>APPn</code>. Файл остаётся формально валидным, но без заголовка JFIF строгие анализаторы перестают читать размеры.</p>
+          <p>Интеграционный тест этого не поймал: размеры снимаются с исходных байтов <strong>до</strong> очистки. Поймал модульный тест на самой функции.</p>
+          <p class="fixed"><b>Теперь вырезаются</b> <code>APP1</code> (EXIF с геометкой и XMP), <code>APP3</code>–<code>APP15</code> и комментарии. <code>APP0</code> (JFIF) и <code>APP2</code> (цветовой профиль ICC) сохраняются: первый структурный, второй отвечает за цветопередачу. Если APP-заголовка не осталось — подставляется минимальный JFIF.</p>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- 3 -->
+    <section id="s3">
+      <h2><span class="sn">03</span><span>Транспорт: обработчики остаются тонкими</span></h2>
+      <p class="lede">Типичный обработчик 3–8 строк, самый длинный 21. Целиком:</p>
+<pre class="code">import { handle } from '@/server/http/handler';
+import { catalog } from '@/server';
+
+export const GET = handle&lt;{ slug: string }&gt;(async (ctx) =&gt;
+  <b>catalog.getListingBySlug(ctx.params.slug, ctx.locale)</b>,
+);</pre>
+      <p>Всё общее живёт в обёртке <code>handle()</code>: разбор cookie сессии, проверка CSRF, разбор параметров пути и строки запроса, единый конверт ответа, перевод доменных ошибок.</p>
+      <p>Обработчики генерируются из таблицы в <code>scripts/generate-routes.mjs</code>. Причина не в экономии: сорок с лишним почти одинаковых файлов невозможно проверить глазами на предмет просочившейся логики, а одну таблицу — можно.</p>
+
+      <h3>Разбор строки запроса</h3>
+      <p>Повторяющиеся ключи собираются в массив (<code>?amenities=pool&amp;amenities=spa</code>), <code>true</code>/<code>false</code> приводятся к булеву типу. Числа транспорт не трогает — их приводят схемы сервисов через <code>z.coerce</code>, поэтому одно и то же поле одинаково работает и в строке запроса, и в JSON-теле.</p>
+    </section>
+
+    <!-- 4 -->
+    <section id="s4">
+      <h2><span class="sn">04</span><span>Сессия и CSRF</span></h2>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Cookie</th><th>Флаги</th><th>Зачем</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><code>pq_session</code></td><td class="nowrap"><code>HttpOnly</code>, <code>SameSite=Lax</code>, <code>Secure</code> в проде</td><td>Токен недоступен скриптам: XSS не даёт его украсть</td></tr>
+            <tr><td class="nowrap"><code>pq_csrf</code></td><td class="nowrap">без <code>HttpOnly</code></td><td>Клиент обязан прочитать и вернуть заголовком — в этом суть double submit</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Токен сессии не попадает в тело ответа: он живёт только в cookie.</p>
+      <p><strong>Проверка применяется к изменяющим запросам от аутентифицированного пользователя.</strong> CSRF эксплуатирует попутные полномочия — cookie, которую браузер отправляет автоматически. Без сессии подделывать нечего, а у гостя ещё нет токена, который можно было бы вернуть.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Запрос</th><th>Проверка</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET</code> с сессией</td><td><span class="chip chip-no">не требуется</span></td></tr>
+            <tr><td><code>PATCH /me</code> с сессией</td><td><span class="chip chip-yes">обязательна</span></td></tr>
+            <tr><td><code>POST /requests</code> от гостя</td><td><span class="chip chip-no">не требуется</span> — попутных полномочий нет</td></tr>
+            <tr><td><code>POST /auth/login</code></td><td><span class="chip chip-no">не требуется</span> — сессии ещё нет</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Для гостевых POST основной защитой остаётся <code>SameSite=Lax</code>.</p>
+    </section>
+
+    <!-- 5 -->
+    <section id="s5">
+      <h2><span class="sn">05</span><span>Перевод ошибок в коды состояния</span></h2>
+      <p class="lede">Сервисы не знают про HTTP. Перевод происходит в одном файле — <code>src/server/http/respond.ts</code>.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Источник</th><th class="num">Код</th><th>Тело</th></tr></thead>
+          <tbody>
+            <tr><td><code>ValidationError</code></td><td class="num">422</td><td>код + разбор по полям</td></tr>
+            <tr><td><code>UnauthorizedError</code></td><td class="num">401</td><td>—</td></tr>
+            <tr><td><code>ForbiddenError</code></td><td class="num">403</td><td>—</td></tr>
+            <tr><td><code>NotFoundError</code></td><td class="num">404</td><td><code>LISTING_NOT_FOUND</code> и т. п.</td></tr>
+            <tr><td><code>ConflictError</code></td><td class="num">409</td><td>—</td></tr>
+            <tr><td><code>TooManyRequestsError</code></td><td class="num">429</td><td>—</td></tr>
+            <tr><td>Prisma <code>P2002</code></td><td class="num">409</td><td>обобщённое сообщение</td></tr>
+            <tr><td>Prisma <code>P2023</code> (неверный UUID)</td><td class="num">400</td><td>ошибка клиента, не наш сбой</td></tr>
+            <tr><td>Всё остальное</td><td class="num">500</td><td><strong>только код</strong>, без текста</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Текст неизвестной ошибки наружу не отдаётся: сообщения Prisma содержат имена таблиц, пути и фрагменты запросов.</p>
+    </section>
+
+    <!-- 6 -->
+    <section id="s6">
+      <h2><span class="sn">06</span><span>Хранилище</span></h2>
+      <p class="lede"><code>StoragePort</code> и три реализации: <code>S3Storage</code> (R2 в проде, MinIO локально — протокол один), <code>MemoryStorage</code> для тестов, выбор по переменным окружения.</p>
+      <p>В продакшене без настроек приложение падает при старте; вне продакшена — предупреждение и память. Молчаливый переход на заглушку был бы хуже явного отказа.</p>
+
+      <h3>Поток загрузки</h3>
+<pre class="code"><b>1.</b> Админка просит ссылку
+     POST /admin/media/upload-url  { mime, sizeBytes }
+       └─ <i>сервер проверяет тип и размер, генерирует ключ (UUID),
+          возвращает presigned PUT</i>
+
+<b>2.</b> Браузер кладёт файл НАПРЯМУЮ в R2 или MinIO
+     <i>(через наш сервер файл не идёт: нет нагрузки и нет лимитов body-parser)</i>
+
+<b>3.</b> Админка подтверждает
+     POST /admin/media/confirm  { storageKey }
+       └─ <u>и вот здесь мы впервые видим содержимое</u></pre>
+
+      <h3>Что проверяется при подтверждении</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Проверка</th><th>Поведение</th></tr></thead>
+          <tbody>
+            <tr><td>Тип по сигнатуре байтов</td><td>JPEG / PNG / WebP / AVIF. SVG отсутствует намеренно — это XML со скриптом</td></tr>
+            <tr><td>Заявленный тип ≠ фактический</td><td>В базу пишется <strong>фактический</strong></td></tr>
+            <tr><td>Не изображение</td><td>Отказ <strong>и удаление объекта</strong> из хранилища</td></tr>
+            <tr><td>Размеры</td><td>Читаются из содержимого, а не со слов клиента</td></tr>
+            <tr><td>EXIF</td><td>Вырезается — см. раздел 2.2</td></tr>
+            <tr><td>Размер</td><td>Сверяется с фактическим, а не с обещанным</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Ключ объекта генерирует только сервер: имя файла от клиента открыло бы путь к перезаписи чужих объектов и path traversal.</p>
+    </section>
+
+    <!-- 7 -->
+    <section id="s7">
+      <h2><span class="sn">07</span><span>Уведомления</span></h2>
+      <p class="lede"><code>NotifierPort</code> и три реализации: <code>TelegramNotifier</code> (Bot API через <code>fetch</code>), <code>ConsoleNotifier</code> (без настроек пишет в лог вместо отправки), <code>MemoryNotifier</code> для тестов.</p>
+
+      <h3>Два правила</h3>
+      <ul>
+        <li>сбой канала не роняет заявку — она уже сохранена, и недоступный Telegram не повод отвечать клиенту ошибкой;</li>
+        <li>отправка не блокирует ответ — уходит в фон.</li>
+      </ul>
+      <p>Из-за второго правила добавлен <code>flushNotifications()</code>: иначе фоновую отправку невозможно проверить детерминированно.</p>
+      <p>Повтор с тем же ключом идемпотентности до отправки не доходит — дубля сообщения менеджеру не будет.</p>
+      <p><strong>Электронная почта не реализована</strong> по указанию. Добавляется новой реализацией того же интерфейса.</p>
+
+      <h3>О персональных данных</h3>
+      <div class="note">
+        <p>Сообщение содержит контакты клиента — это рабочий инструмент: менеджер перезванивает, не открывая админку. Обратная сторона — <strong>персональные данные уходят во внешний сервис</strong>, поэтому чат обязан быть закрытым, а состав участников контролируемым. Отмечено в <code>.env.example</code> рядом с переменными.</p>
+        <p>Пользовательский текст экранируется: <code>&lt;script&gt;</code> в комментарии к заявке не станет разметкой.</p>
+      </div>
+    </section>
+
+    <!-- 8 -->
+    <section id="s8">
+      <h2><span class="sn">08</span><span>Проверки</span></h2>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Набор</th><th>Команда</th><th class="num">Результат</th></tr></thead>
+          <tbody>
+            <tr><td>Типизация</td><td class="nowrap"><code>npm run typecheck</code></td><td class="num">чисто</td></tr>
+            <tr><td>Сборка Next</td><td class="nowrap"><code>npm run build</code></td><td class="num">44 маршрута</td></tr>
+            <tr><td>Инварианты схемы</td><td class="nowrap"><code>npm run db:verify</code></td><td class="num">16 / 16</td></tr>
+            <tr><td>Гонка обложки</td><td class="nowrap"><code>npm run db:verify:race</code></td><td class="num">4 / 4</td></tr>
+            <tr><td>Сид</td><td class="nowrap"><code>npm run db:verify:seed</code></td><td class="num">27 / 27</td></tr>
+            <tr><td>Service layer</td><td class="nowrap"><code>npm test</code></td><td class="num">53 / 53</td></tr>
+            <tr><td><strong>Транспорт</strong></td><td class="nowrap"><code>npm run test:http</code></td><td class="num"><strong>30 / 30</strong></td></tr>
+            <tr><td><strong>Хранилище и медиа</strong></td><td class="nowrap"><code>npm run test:media</code></td><td class="num"><strong>19 / 19</strong></td></tr>
+            <tr><td><strong>Уведомления</strong></td><td class="nowrap"><code>npm run test:notify</code></td><td class="num"><strong>11 / 11</strong></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Всего 160 проверок, все пройдены.</strong> Сводно: <code>npm run verify:all</code></p>
+
+      <h3>Что покрывают новые тесты</h3>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Набор</th><th>Ключевое</th></tr></thead>
+          <tbody>
+            <tr><td class="nowrap"><strong>Транспорт</strong><br><span class="mono">30</span></td><td>конверт ответа и метаданные выдачи; приведение чисел из строки запроса; потолок <code>perPage</code> не обходится; массивы в параметрах; <code>HttpOnly</code> и <code>SameSite</code> на сессии; токен не попадает в тело; выход обрывает сессию; CSRF без заголовка и с неверным заголовком; гостевой POST без токена; 401 / 403 / 404 / 409 / 422 / 429; неверный UUID даёт 400; битый JSON не роняет процесс; идемпотентность через заголовок</td></tr>
+            <tr><td class="nowrap"><strong>Хранилище</strong><br><span class="mono">19</span></td><td>распознавание четырёх форматов; SVG и исполняемый файл не проходят; размеры из содержимого; вырезание EXIF с сохранением читаемости; ключ генерирует сервер; подменённый тип; удаление мусора из хранилища; конфликт при повторном подтверждении; запись в журнал аудита; привязка к объекту с сохранением единственной обложки</td></tr>
+            <tr><td class="nowrap"><strong>Уведомления</strong><br><span class="mono">11</span></td><td>состав сообщения; экранирование разметки; отсутствие пустых строк; отправка при создании заявки; сбой канала не мешает принять заявку; отсутствие дубля при повторе; отсутствие уведомления при отклонённой заявке; недоступная сеть и ошибка Telegram не приводят к исключению; корректный вызов <code>sendMessage</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9 -->
+    <section id="s9">
+      <h2><span class="sn">09</span><span>Известные ограничения</span></h2>
+      <p class="lede">Названы явно, чтобы не выглядели упущением.</p>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Ограничение</th><th>Когда снимается</th></tr></thead>
+          <tbody>
+            <tr><td>Счётчики частоты в памяти процесса — обнуляются при перезапуске, не общие для нескольких инстансов</td><td>при переходе на несколько инстансов, переносом в Redis</td></tr>
+            <tr><td><code>blurDataUrl</code> — нейтральная заглушка: настоящее размытие требует перекодирования</td><td>вместе с обработкой изображений</td></tr>
+            <tr><td>Производные размеры изображений не генерируются; раздача идёт через оптимизацию Next</td><td>при росте нагрузки — imgproxy или Cloudflare Images</td></tr>
+            <tr><td>Уведомления не переотправляются при сбое канала</td><td>при появлении очереди задач</td></tr>
+            <tr><td>Электронная почта отсутствует</td><td>по указанию, следующий этап</td></tr>
+            <tr><td><code>npm run verify:all</code> последовательно поднимает пять серверов и потому долгий</td><td>при желании — общий сервер на все наборы</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <h2><span class="sn">10</span><span>Рекомендуемые следующие шаги</span></h2>
+      <ol>
+        <li><strong>UI</strong> — публичный каталог, кабинет и админка поверх готового API. Транспорт зафиксирован, переделок не потребует.</li>
+        <li><strong>Электронная почта</strong> — подтверждение заявки клиенту и письма сброса пароля. Сейчас токен сброса возвращается сервисом, но отправлять его некому.</li>
+        <li><strong>MinIO в docker-compose</strong> — чтобы загрузка работала локально из коробки, без внешнего аккаунта.</li>
+        <li><strong>Развёртывание демо</strong> — Vercel, управляемый Postgres, R2.</li>
+      </ol>
+      <p>Первым пунктом идёт UI: остальное — инфраструктура, которую удобнее настраивать, когда есть что показывать.</p>
+    </section>
+
+    <footer>
+      Документ описывает состояние на 26.08.2026. Источник — <code>src/server/API-LAYER-REVIEW.md</code> в репозитории проекта. Предыдущие этапы: схема данных (утв. 25.08), service layer (утв. 26.08).
+    </footer>
+
+  </main>
+</div>

@@ -1,0 +1,252 @@
+.header {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 60;
+  color: var(--color-shell);
+  border-bottom: 1px solid transparent;
+  transition:
+    background-color 0.4s var(--ease-out-soft),
+    color 0.4s var(--ease-out-soft),
+    border-color 0.4s var(--ease-out-soft),
+    backdrop-filter 0.4s var(--ease-out-soft);
+}
+
+/* Над фотографией шапка прозрачная, дальше набирает фон: иначе белые
+   ссылки теряются на светлом кремовом листе. */
+.solid {
+  background: color-mix(in srgb, var(--color-cream) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(130%);
+  border-bottom-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
+  color: var(--color-ink);
+}
+
+.bar {
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 3vw, 2.5rem);
+}
+
+/* ── Логотип ──────────────────────────────────────────────────────────── */
+
+.brand {
+  color: inherit;
+  text-decoration: none;
+  flex: none;
+}
+/* Марка столбиком: пальма над названием, скрипт под ним — как в референсе. */
+.brandInner {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 0.4rem;
+}
+.brandInner > svg {
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: center;
+}
+.brandText {
+  grid-row: 1 / 3;
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+}
+.brandName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.brandSub {
+  font-family: var(--font-script);
+  font-size: 1rem;
+  margin-top: 0.1rem;
+  opacity: 0.85;
+}
+
+/* ── Навигация ────────────────────────────────────────────────────────── */
+
+.nav {
+  display: none;
+  gap: clamp(1.1rem, 2.2vw, 2.25rem);
+  margin-inline: auto;
+}
+@media (min-width: 1000px) {
+  .nav {
+    display: flex;
+  }
+}
+
+.navLink {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+  font-size: 0.9375rem;
+  padding-block: 0.4rem;
+  opacity: 0.9;
+  transition: opacity 0.2s var(--ease-out-soft);
+}
+.navLink::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--color-gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s var(--ease-out-soft);
+}
+.navLink:hover {
+  opacity: 1;
+}
+.navLink:hover::after {
+  transform: scaleX(1);
+}
+
+/* ── Правая часть ─────────────────────────────────────────────────────── */
+
+.tail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+}
+
+.lang,
+.signIn {
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  opacity: 0.9;
+  transition: opacity 0.2s var(--ease-out-soft);
+}
+.lang:hover,
+.signIn:hover {
+  opacity: 1;
+}
+@media (min-width: 1000px) {
+  .lang,
+  .signIn {
+    display: inline-flex;
+  }
+}
+
+.cta {
+  display: none;
+  min-height: 2.75rem;
+  padding: 0 1.2rem;
+  font-size: 0.875rem;
+}
+/* Не кнопка, а объявление: курсор обычный, нажатия не ждём. */
+.cta[data-soon] {
+  cursor: default;
+  gap: 0.5rem;
+}
+.soon {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-teal) 12%, transparent);
+  color: var(--color-teal);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+@media (min-width: 1000px) {
+  .cta {
+    display: inline-flex;
+  }
+}
+
+.burger {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: none;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+}
+@media (min-width: 1000px) {
+  .burger {
+    display: none;
+  }
+}
+
+/* ── Мобильное меню ───────────────────────────────────────────────────── */
+
+.sheet {
+  position: fixed;
+  inset: var(--nav-h) 0 0 0;
+  background: var(--color-cream);
+  color: var(--color-ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(1.5rem, 6vh, 3rem) var(--spacing-gutter) clamp(2rem, 7vh, 3.5rem);
+}
+@media (min-width: 1000px) {
+  .sheet {
+    display: none;
+  }
+}
+
+.sheetNav {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 8vw, 2.4rem);
+  line-height: 1.2;
+  color: var(--color-ink);
+  text-decoration: none;
+  padding-block: 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 12%, transparent);
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.4s var(--ease-out-soft),
+    transform 0.4s var(--ease-out-soft);
+}
+.sheet[data-open='true'] .sheetLink {
+  opacity: 1;
+  transform: none;
+}
+
+.sheetFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheetLink {
+    opacity: 1;
+    transform: none;
+  }
+}
