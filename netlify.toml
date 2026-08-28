@@ -21,10 +21,7 @@
 # Поэтому в build их нет: иначе каждый деплой стирал бы то, что показали.
 
 [build]
-  # ВРЕМЕННО: разовое накатывание миграций и демо-данных на новую базу.
-  # Как только сборка пройдёт, вернуть на "npm run db:generate && npm run build" —
-  # иначе db:seed будет сносить данные при каждом деплое.
-  command = "npm run db:generate && npm run db:deploy && npm run db:seed && npm run build"
+  command = "npm run db:generate && npm run build"
   publish = ".next"
 
 [build.environment]
