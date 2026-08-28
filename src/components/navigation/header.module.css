@@ -4,10 +4,22 @@
   top: 0;
   z-index: 60;
   color: var(--color-shell);
+  transition: color 0.4s var(--ease-out-soft);
+}
+
+/* Фон и блюр — на псевдоэлементе, а не на самом .header: backdrop-filter
+   на предке превращает вложенный position:fixed (мобильное меню) в
+   absolute относительно этого предка, ломая его позиционирование при
+   скролле на iOS Safari. */
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   border-bottom: 1px solid transparent;
+  background: transparent;
   transition:
     background-color 0.4s var(--ease-out-soft),
-    color 0.4s var(--ease-out-soft),
     border-color 0.4s var(--ease-out-soft),
     backdrop-filter 0.4s var(--ease-out-soft);
 }
@@ -15,10 +27,12 @@
 /* Над фотографией шапка прозрачная, дальше набирает фон: иначе белые
    ссылки теряются на светлом кремовом листе. */
 .solid {
+  color: var(--color-ink);
+}
+.solid::before {
   background: color-mix(in srgb, var(--color-cream) 92%, transparent);
   backdrop-filter: blur(14px) saturate(130%);
   border-bottom-color: color-mix(in srgb, var(--color-ink) 10%, transparent);
-  color: var(--color-ink);
 }
 
 .bar {
